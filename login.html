@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+
+<html lang="es" class="no-js">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Bitacora Gres Caribe</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="style.css">
+        <link rel="manifest" href="manifest.json">
+        <meta name="theme-color" content="#0f172a">
+        <script src="session.js"></script>
+        <script>
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(() => requestPrecacheStatus(navigator.serviceWorker))
+                    .catch(err => {
+                        console.log('Service Worker registration failed: ', err);
+                        showServiceWorkerError();
+                    });
+                navigator.serviceWorker.addEventListener('message', (event) => {
+                    handlePrecacheStatus(event);
+                });
+            }
+
+            function redirectToDashboard() {
+                window.location.href = 'dashboard.html';
+            }
+            // CORREGIDO: Ahora verifica el Token real que generas abajo, no el viejo "isLoggedIn"
+            const token = getSessionToken();
+            if (token) {
+                try {
+                    parseSessionToken(token);
+                    redirectToDashboard();
+                } catch (e) {
+                    // Si el token fue manipulado en la consola, limpia todo
+                    clearSessionToken();
+                }
+            }   
+            // 2. NORMAL PAGE LOAD: Handle form submissions if they aren't logged in yet
+            window.addEventListener('DOMContentLoaded', () => {
+                const form = document.getElementById('loginForm');
+                const errorAlert = document.getElementById('error-alert');
+                const errorTitle = document.getElementById('error-title');
+                const errorDesc = document.getElementById('error-desc');
+
+                if (!SESSION_APIS_SUPPORTED) {
+                    disableUnsupportedControls(document);
+                    return;
+                }
+                
+                form.addEventListener('submit', (event) => {
+                    event.preventDefault(); 
+                    
+                    //Capture the values
+                    const usernameValue = document.getElementById('nombre').value.trim();
+                    const cargoValue = document.getElementById('cargo').value.trim();
+
+                    //Hide the previous alert
+                    errorAlert.style.display = 'none';
+
+                    //Don't let nulls
+                    if (usernameValue === "") {
+                        showError("Error de Validación", "El nombre de usuario es obligatorio y no puede quedar vacío.");
+                        return;
+                    }
+
+                    if (cargoValue === "") {
+                        showError("Error de Validación", "Debe especificar un cargo o posición válida dentro de la empresa.");
+                        return;
+                    }
+
+                    const fakeSessionToken = encodeToken(JSON.stringify({
+                        nombre: usernameValue,
+                        cargo: cargoValue,
+                        marker: SESSION_MARKER
+                    }));
+
+                    if (!saveSessionToken(fakeSessionToken)) {
+                        showError("Error de almacenamiento", "No se pudo guardar la sesión en este navegador.");
+                        return;
+                    }
+                    
+                    // Redirect them to the app dashboard
+                    window.location.href = 'dashboard.html';    
+                });
+                function showError(title, message) {
+                    errorTitle.innerText = title;
+                    errorDesc.innerText = message;
+                    errorAlert.style.display = 'block';
+                }
+            });
+        </script>
+    </head>
+
+    <body>
+        <p id="compatibility-error" role="alert" aria-live="assertive" hidden>Este navegador no es compatible con esta aplicación.</p>
+        <p id="service-worker-error" role="status" aria-live="polite" hidden>No se pudo activar el modo sin conexión.</p>
+        <!--[if lt IE 7]>
+            <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
+        <![endif]-->
+            
+        <div class="login-container">
+            <h2>
+            Bitacora Gres Caribe
+            </h2>
+            
+            <div class="subtitle">Ingrese su nombre y oficio para acceder</div>
+
+            <form id="loginForm" action="#" method="post" novalidate>
+                <div id="error-alert" style="display: none; background-color: #fef2f2; border: 1px solid #fee2e2; color: #991b1b; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 14px;">
+                    <strong id="error-title" style="display: block; font-weight: 700; margin-bottom: 4px;"></strong>
+                    <span id="error-desc"></span>
+                </div>
+
+                <div class="input-group">
+                    <label for="nombre">Nombre:</label>
+                    <input type="text" name="nombre" id="nombre" placeholder="Ej. Ramiro" required>
+                </div>                
+                <div class="input-group">
+                    <label for="cargo">Cargo:</label>
+                    <input type="text" name="cargo" id="cargo" placeholder="Ej. Mecanico" required>
+                </div>  
+
+                <button type="submit">Registrarse</button>
+
+            </form>
+        </div>
+
+    </body>
+</html>

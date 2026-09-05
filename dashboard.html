@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitacora</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <script src="session.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker registered!', reg))
+                    .then(() => requestPrecacheStatus(navigator.serviceWorker))
+                    .catch(err => {
+                        console.log('Service Worker registration failed: ', err);
+                        showServiceWorkerError();
+                    });
+                navigator.serviceWorker.addEventListener('message', (event) => {
+                    handlePrecacheStatus(event);
+                });
+            });
+        }
+        // Validar la sesión de forma más estricta
+        const token = getSessionToken();
+        let sessionData = null;
+
+        if (!token) {
+            // Si no hay token, fuera de aquí
+            window.location.href = 'login.html';    
+        } else {
+            try {
+                sessionData = parseSessionToken(token);
+            } catch (e) {
+                // Si el usuario inventó el token en la consola, el atob() fallará o no tendrá la firma
+                clearSessionToken();
+                    window.location.href = 'login.html';
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!SESSION_APIS_SUPPORTED) {
+                document.querySelector('.login-container').hidden = true;
+                disableUnsupportedControls(document);
+                return;
+            }
+
+            if (!sessionData) {
+                return;
+            }
+
+            // save user data to
+            const user = sessionData.nombre;
+            const cargo = sessionData.cargo;
+            //const turno = sessionData.turno; //extract hour from the task
+            //const fecha = sessionData.fecha; //extract date from the task
+            //const maquina = sessionData.maquina; //extract machine from the task
+
+            
+
+            document.getElementById('welcome-msg').innerText = `Bienvenido, ${user}!`;
+            document.getElementById('cargo-display').innerText = `Oficio registrado: ${cargo}`;
+
+            // Log Out button logic
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                // CORREGIDO: Eliminamos los datos reales de sesión actuales
+                if (!clearSessionToken()) {
+                    window.alert('No se pudo cerrar la sesión en este navegador.');
+                    return;
+                }
+
+                window.location.href ="login.html";
+            });
+        });
+    </script>
+</head>
+<body>
+    <p id="compatibility-error" role="alert" aria-live="assertive" hidden>Este navegador no es compatible con esta aplicación.</p>
+    <p id="service-worker-error" role="status" aria-live="polite" hidden>No se pudo activar el modo sin conexión.</p>
+
+    <div class="login-container" style="max-width: 600px; margin: 20px auto;">
+        <h2 id="welcome-msg">Cargando...</h2>
+        
+        <!-- MEJORA: Elemento para mostrar el cargo del trabajador en el sistema -->
+        <p id="cargo-display" style="text-align: center; color: #475569; font-weight: 600; margin-bottom: 24px;"></p>
+        
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin-bottom: 24px;">
+        <h3>Registrar Novedad en Planta</h3>
+        
+        <!-- Alerta de error interna del formulario -->
+        <div id="form-error" style="display: none; background-color: #fef2f2; border: 1px solid #fee2e2; color: #991b1b; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 14px;">
+            <strong>Error:</strong> <span id="form-error-desc"></span>
+        </div>
+
+        <form id="bitacoraForm" novalidate>
+            <!-- Selección de Máquina / Área -->
+            <div class="input-group" style="margin-bottom: 20px;">
+                <label for="maquina">Máquina o Área afectada:</label>
+                <input type="text" id="maquina" placeholder="Ej. Extrusora 68, Horno" required>
+            </div>
+
+            <!-- Descripción Técnica de la Novedad -->
+            <div class="input-group" style="margin-bottom: 20px;">
+                <label for="novedad">Descripción de la novedad o falla:</label>
+                <textarea id="novedad" placeholder="Describa brevemente la actividad realizada..." style="width: 100%; min-height: 100px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 16px; font-family: inherit; box-sizing: border-box; resize: vertical;" required></textarea>
+            </div>
+
+            <button type="submit" style="background-color: #039b47; margin-bottom: 12px;">Guardar Reporte</button>
+        </form>
+
+        <!-- Historial de Novedades Local -->
+        <h3 style="margin-top: 32px;">Historial de Reportes Recientes</h3>
+        <div id="historial-container" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; min-height: 50px; font-size: 14px; color: #64748b;">
+            No hay novedades registradas en este dispositivo todavía.
+        </div>
+
+        <!-- Botón de Salida -->
+        <button id="logoutBtn" style="background-color: #dc2626; margin-top: 32px;">Cerrar Sesión</button>
+    </div>
+
+</body>
+</html>
