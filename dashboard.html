@@ -51,15 +51,27 @@
                 return;
             }
 
+            const form = document.getElementById('bitacoraForm')
             // save user data to
             const user = sessionData.nombre;
             const cargo = sessionData.cargo;
             //const turno = sessionData.turno; //extract hour from the task
             //const fecha = sessionData.fecha; //extract date from the task
-            //const maquina = sessionData.maquina; //extract machine from the task
+            const errorAlert = document.getElementById('form-error');
+            const errorDesc = document.getElementById('form-error-desc');
 
-            
+            // Helper: Show error notification
+            function showError(message) {
+                errorDesc.innerText = message;
+                errorAlert.style.display = 'block';
+            }
 
+            // Helper: Hide error notification
+            function hideError() {
+                errorAlert.style.display = 'none';
+                errorDesc.innerText = '';
+            }
+                        
             document.getElementById('welcome-msg').innerText = `Bienvenido, ${user}!`;
             document.getElementById('cargo-display').innerText = `Oficio registrado: ${cargo}`;
 
@@ -73,6 +85,33 @@
 
                 window.location.href ="login.html";
             });
+
+            form.addEventListener('submit',(event) => {
+                event.preventDefault()
+                hideError()
+                const maquina = document.getElementById('maquina').value.trim(); //extract machine from the task
+                const novedad =  document.getElementById('novedad').value.trim(); //extract the description
+                
+                if (maquina === ""){
+                    showError("Especifique el nombre de la maquina o area afectada")
+                    const input = document.getElementById('maquina')
+                    input.classList.add('input-error');
+                    setTimeout(() => {
+                        input.classList.remove('input-error');
+                    }, 1000);
+                    return;
+                }
+
+                if (novedad === ""){
+                    showError("Especifique la novedad realizada")
+                    const input = document.getElementById('novedad')
+                    input.classList.add('input-error');
+                    setTimeout(() => {
+                        input.classList.remove('input-error');
+                    }, 1000);
+                    return;
+                }
+            })
         });
     </script>
 </head>
@@ -104,7 +143,7 @@
             <!-- Descripción Técnica de la Novedad -->
             <div class="input-group" style="margin-bottom: 20px;">
                 <label for="novedad">Descripción de la novedad o falla:</label>
-                <textarea id="novedad" placeholder="Describa brevemente la actividad realizada..." style="width: 100%; min-height: 100px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 16px; font-family: inherit; box-sizing: border-box; resize: vertical;" required></textarea>
+                <input id="novedad" placeholder="Describa brevemente la actividad realizada..." style="width: 100%; min-height: 100px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 16px; font-family: inherit; box-sizing: border-box; resize: vertical;" required>
             </div>
 
             <button type="submit" style="background-color: #039b47; margin-bottom: 12px;">Guardar Reporte</button>

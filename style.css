@@ -45,6 +45,23 @@ h2 {
     margin-bottom: 20px;
 }
 
+input.input-error {
+    position: relative;
+    animation: shake.1s linear;
+    animation-iteration-count: 3;
+    border: 1px solid #f87171 !important;
+    box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.15) !important; /* Subtle red shadow */
+}
+
+@keyframes shake {
+    0% {
+        left: -5px;
+    }
+    100% {
+        right: -5px;
+    }
+}
+
 label {
     display: block;
     margin-bottom: 6px;

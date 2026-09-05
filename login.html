@@ -63,11 +63,22 @@
                     //Don't let nulls
                     if (usernameValue === "") {
                         showError("Error de Validación", "El nombre de usuario es obligatorio y no puede quedar vacío.");
+                        
+                        const input = document.getElementById('nombre');
+                        input.classList.add('input-error');
+                        setTimeout(() => {
+                            input.classList.remove('input-error');
+                        }, 1000);
                         return;
                     }
 
                     if (cargoValue === "") {
                         showError("Error de Validación", "Debe especificar un cargo o posición válida dentro de la empresa.");
+                        const input = document.getElementById('cargo');
+                        input.classList.add('input-error');
+                        setTimeout(() => {
+                            input.classList.remove('input-error');
+                        }, 1000);
                         return;
                     }
 
