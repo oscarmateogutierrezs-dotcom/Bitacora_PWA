@@ -42,7 +42,7 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             if (!SESSION_APIS_SUPPORTED) {
-                document.querySelector('.login-container').hidden = true;
+                document.querySelector('.container').hidden = true;
                 disableUnsupportedControls(document);
                 return;
             }
@@ -80,7 +80,7 @@
     <p id="compatibility-error" role="alert" aria-live="assertive" hidden>Este navegador no es compatible con esta aplicación.</p>
     <p id="service-worker-error" role="status" aria-live="polite" hidden>No se pudo activar el modo sin conexión.</p>
 
-    <div class="login-container" style="max-width: 600px; margin: 20px auto;">
+    <div class="container" style="max-width: 600px; margin: 20px auto;">
         <h2 id="welcome-msg">Cargando...</h2>
         
         <!-- MEJORA: Elemento para mostrar el cargo del trabajador en el sistema -->
