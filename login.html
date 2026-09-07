@@ -131,7 +131,14 @@
                 </div>                
                 <div class="input-group">
                     <label for="cargo">Cargo:</label>
-                    <input type="text" name="cargo" id="cargo" placeholder="Ej. Mecanico" required>
+                    <div class="select-wrapper">
+                        <select name="cargo" id="cargo" required>
+                            <option value="">Seleccione un cargo</option>
+                            <option value="Mecánico">Mecánico</option>
+                            <option value="Eléctrico">Eléctrico</option>
+                            <option value="Supervisor">Supervisor</option>
+                        </select>
+                    </div>
                 </div>  
 
                 <button type="submit">Registrarse</button>

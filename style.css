@@ -61,6 +61,13 @@ textarea.input-error {
     box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.15) !important; /* Subtle red shadow */
 }
 
+select.input-error {
+    position: relative;
+    animation: shake.1s linear;
+    animation-iteration-count: 3;
+    border: 1px solid #f87171 !important;
+    box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.15) !important; /* Subtle red shadow */
+}
 
 @keyframes shake {
     0% {
@@ -98,6 +105,53 @@ input[type="text"]:focus {
     border-color: #0284c7;
     box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
     outline: none;
+}
+
+select {
+    width: 100%;
+    height: 48px; 
+    padding: 0 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 16px; /* Prevents iOS auto-zoom on focus */
+    color: #0f172a;
+    background-color: #ffffff;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+select:focus {
+    border-color: #0284c7;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+    outline: none;
+}
+
+.select-wrapper {
+    position: relative;
+}
+
+.select-wrapper::after {
+    content: '▼';
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #64748b;
+    font-size: 12px;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.select-wrapper:focus-within::after {
+    transform: translateY(-50%) rotate(180deg);
+    color: #0284c7;
+}
+
+.select-wrapper select {
+    appearance: none; /* Removes default arrow */
+    -webkit-appearance: none; /* For Safari */
+    -moz-appearance: none; /* For Firefox */
+    background: transparent; /* Ensures the arrow is visible */
 }
 
 button {
