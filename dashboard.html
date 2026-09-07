@@ -91,6 +91,7 @@
                 hideError()
                 const maquina = document.getElementById('maquina').value.trim(); //extract machine from the task
                 const novedad =  document.getElementById('novedad').value.trim(); //extract the description
+                const duracion = document.getElementById('duracion').value.trim(); //extract the duration of the task
                 
                 if (maquina === ""){
                     showError("Especifique el nombre de la maquina o area afectada")
@@ -105,6 +106,16 @@
                 if (novedad === ""){
                     showError("Especifique la novedad realizada")
                     const input = document.getElementById('novedad')
+                    input.classList.add('input-error');
+                    setTimeout(() => {
+                        input.classList.remove('input-error');
+                    }, 1000);
+                    return;
+                }
+
+                if (duracion === ""){
+                    showError("Especifique la duración de la novedad")
+                    const input = document.getElementById('duracion')
                     input.classList.add('input-error');
                     setTimeout(() => {
                         input.classList.remove('input-error');
@@ -144,6 +155,11 @@
             <div class="input-group" style="margin-bottom: 20px;">
                 <label for="novedad">Descripción de la novedad o falla:</label>
                 <textarea id="novedad" placeholder="Describa brevemente la actividad realizada..." style="width: 100%; min-height: 100px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 16px; font-family: inherit; box-sizing: border-box; resize: vertical;" required></textarea>
+            </div>
+            <!-- Duración del Mantenimiento -->
+            <div class="input-group" style="margin-bottom: 20px;">
+                <label for="duracion">Duración del mantenimiento:</label>
+                <input type="text" id="duracion" placeholder="Ej. 2 horas" required>
             </div>
 
             <button type="submit" style="background-color: #039b47; margin-bottom: 12px;">Guardar Reporte</button>
