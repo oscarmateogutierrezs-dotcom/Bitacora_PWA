@@ -100,11 +100,34 @@ input[type="text"] {
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+input[type="number"] {
+    width: 100%;
+    height: 48px; 
+    padding: 0 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 16px; /* Prevents iOS auto-zoom on focus */
+    color: #0f172a;
+    background-color: #ffffff;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
 /* Secure Enterprise blue focus state */
 input[type="text"]:focus {
     border-color: #0284c7;
     box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
     outline: none;
+}
+
+.duration-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.duration-fields label {
+    margin-bottom: 6px;
 }
 
 select {
@@ -194,4 +217,18 @@ button:active {
 #compatibility-error:not([hidden]),
 #service-worker-error:not([hidden]) {
     display: block;
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 12px;
+    }
+
+    .container {
+        padding: 24px 16px;
+    }
+
+    .duration-fields {
+        gap: 8px;
+    }
 }

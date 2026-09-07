@@ -55,8 +55,6 @@
             // save user data to
             const user = sessionData.nombre;
             const cargo = sessionData.cargo;
-            //const turno = sessionData.turno; //extract hour from the task
-            //const fecha = sessionData.fecha; //extract date from the task
             const errorAlert = document.getElementById('form-error');
             const errorDesc = document.getElementById('form-error-desc');
             const historialContainer = document.getElementById('historialContainer');
@@ -159,7 +157,8 @@
                     appendField('Novedad', entry.novedad);
                     appendField('Duración', entry.duracion);
                     appendField('Fecha', `${entry.fecha || 'No especificada'} Hora: ${entry.hora || 'No especificada'}`);
-                    appendField('Usuario', `${entry.usuario || 'No especificado'} Cargo: ${entry.cargo || 'No especificado'}`);
+                    appendField('Usuario', `${entry.usuario || 'No especificado'}`);
+                    appendField('Cargo', entry.cargo);
                     container.append(report);
                 });
             }
@@ -186,9 +185,34 @@
                 const linea = document.getElementById('linea').value.trim();
                 const maquina = document.getElementById('maquina').value.trim();
                 const novedad =  document.getElementById('novedad').value.trim(); //extract the description
-                const duracion = document.getElementById('duracion').value.trim(); //extract the duration of the task
+                const duracionHoras = document.getElementById('duracionHoras').value.trim();
+                const duracionMinutos = document.getElementById('duracionMinutos').value.trim();
+                const formatDurationPart = (value, unit) => {
+                    if (!value) {
+                        return '';
+                    }
+
+                    return `${value} ${unit}${value === '1' ? '' : 's'}`;
+                };
+                const duracion = [
+                    formatDurationPart(duracionHoras, 'hora'),
+                    formatDurationPart(duracionMinutos, 'minuto')
+                ].filter(Boolean).join(' y ');
                 const fecha = new Date().toLocaleDateString(); //extract the current date and time
                 const hora = new Date().toLocaleTimeString(); //extract the current time
+
+                if (![duracionHoras, duracionMinutos].every(value => value === '' || /^\d+$/.test(value))) {
+                    showError("La duración solo puede contener números");
+                    const inputs = [
+                        document.getElementById('duracionHoras'),
+                        document.getElementById('duracionMinutos')
+                    ];
+                    inputs.forEach(input => input.classList.add('input-error'));
+                    setTimeout(() => {
+                        inputs.forEach(input => input.classList.remove('input-error'));
+                    }, 1000);
+                    return;
+                }
                 
                 if (area === ""){
                     showError("Especifique el nombre del área afectada")
@@ -228,12 +252,28 @@
                     return;
                 }
 
-                if (duracion === ""){
-                    showError("Especifique la duración de la novedad")
-                    const input = document.getElementById('duracion')
-                    input.classList.add('input-error');
+                if ((parseInt(duracionHoras) === 0 || parseInt(duracionMinutos) === 0)) {
+                    showError("La duración no puede ser cero horas y cero minutos");
+                    const inputs = [
+                        document.getElementById('duracionHoras'),
+                        document.getElementById('duracionMinutos')
+                    ];
+                    inputs.forEach(input => input.classList.add('input-error'));
                     setTimeout(() => {
-                        input.classList.remove('input-error');
+                        inputs.forEach(input => input.classList.remove('input-error'));
+                    }, 1000);
+                    return;
+                }
+
+                if (duracionHoras === "" && duracionMinutos === ""){
+                    showError("Ingrese las horas, los minutos o ambos para la duración")
+                    const inputs = [
+                        document.getElementById('duracionHoras'),
+                        document.getElementById('duracionMinutos')
+                    ];
+                    inputs.forEach(input => input.classList.add('input-error'));
+                    setTimeout(() => {
+                        inputs.forEach(input => input.classList.remove('input-error'));
                     }, 1000);
                     return;
                 }
@@ -244,6 +284,8 @@
                     maquina,
                     novedad,
                     duracion,
+                    duracionHoras,
+                    duracionMinutos,
                     fecha,
                     hora,
                     usuario: user,
@@ -319,8 +361,17 @@
             </div>
             <!-- Duración del Mantenimiento -->
             <div class="input-group" style="margin-bottom: 20px;">
-                <label for="duracion">Duración del mantenimiento:</label>
-                <input type="text" id="duracion" placeholder="Ej. 2 horas" required>
+                <label for="duracionHoras">Duración del mantenimiento:</label>
+                <div class="duration-fields">
+                    <div>
+                        <label for="duracionHoras">Horas:</label>
+                        <input type="number" id="duracionHoras" inputmode="numeric" min="0" step="1" placeholder="Ej. 2">
+                    </div>
+                    <div>
+                        <label for="duracionMinutos">Minutos:</label>
+                        <input type="number" id="duracionMinutos" inputmode="numeric" min="0" step="1" placeholder="Ej. 30">
+                    </div>
+                </div>
             </div>
 
             <button type="submit" style="background-color: #039b47; margin-bottom: 12px;">Guardar Reporte</button>
