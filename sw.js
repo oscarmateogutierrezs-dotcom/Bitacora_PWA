@@ -5,6 +5,7 @@ const ASSETS = [
   'dashboard.html',
   'offline.html',
   'session.js',
+  'areasMaquinas.json',
   'style.css',
   'manifest.json',
   'icons/icon-192.png',

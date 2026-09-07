@@ -60,6 +60,10 @@
             const errorAlert = document.getElementById('form-error');
             const errorDesc = document.getElementById('form-error-desc');
             const historialContainer = document.getElementById('historialContainer');
+            const areaSelect = document.getElementById('area');
+            const lineaGroup = document.getElementById('lineaGroup');
+            const lineaSelect = document.getElementById('linea');
+            const maquinaSelect = document.getElementById('maquina');
 
             // Helper: Show error notification
             function showError(message) {
@@ -72,31 +76,92 @@
                 errorAlert.style.display = 'none';
                 errorDesc.innerText = '';
             }
+
+            function fillSelect(select, options, placeholder) {
+                select.innerHTML = '';
+                select.append(new Option(placeholder, ''));
+                options.forEach(option => select.append(new Option(option, option)));
+            }
+
+            async function loadAreasAndMachines() {
+                try {
+                    const response = await fetch('areasMaquinas.json');
+                    if (!response.ok) {
+                        throw new Error('No se pudo cargar la lista de áreas.');
+                    }
+
+                    const data = await response.json();
+                    const areas = Array.isArray(data.area) ? data.area : [];
+                    fillSelect(areaSelect, areas.map(area => area.nombreA), 'Seleccione un área');
+                    fillSelect(lineaSelect, [], 'Seleccione una línea');
+                    fillSelect(maquinaSelect, [], 'Seleccione primero un área');
+                    lineaGroup.hidden = true;
+                    lineaSelect.required = false;
+                    maquinaSelect.disabled = true;
+
+                    areaSelect.addEventListener('change', () => {
+                        const selectedArea = areas.find(area => area.nombreA === areaSelect.value);
+                        const lines = selectedArea?.lineas || [];
+                        const hasLines = lines.length > 0;
+                        lineaGroup.hidden = !hasLines;
+                        lineaSelect.required = hasLines;
+                        fillSelect(lineaSelect, lines.map(linea => linea.nombreL), 'Seleccione una línea');
+                        const machines = hasLines ? [] : (selectedArea?.maquinas || []);
+                        fillSelect(maquinaSelect, machines.map(machine => machine.nombreM), 'Seleccione una máquina');
+                        maquinaSelect.disabled = hasLines || machines.length === 0;
+                    });
+
+                    lineaSelect.addEventListener('change', () => {
+                        const selectedArea = areas.find(area => area.nombreA === areaSelect.value);
+                        const selectedLine = selectedArea?.lineas?.find(linea => linea.nombreL === lineaSelect.value);
+                        const machines = selectedLine?.maquinas || [];
+                        fillSelect(maquinaSelect, machines.map(machine => machine.nombreM), 'Seleccione una máquina');
+                        maquinaSelect.disabled = machines.length === 0;
+                    });
+                } catch (error) {
+                    showError('No se pudo cargar la lista de áreas y máquinas.');
+                    areaSelect.disabled = true;
+                    maquinaSelect.disabled = true;
+                }
+            }
                         
             document.getElementById('welcome-msg').innerText = `Bienvenido, ${user}!`;
             document.getElementById('cargo-display').innerText = `Oficio registrado: ${cargo}`;
+            loadAreasAndMachines();
 
             function updateHistorialDisplay(container, entries) {
                 if (!entries || entries.length === 0) {
-                    container.innerHTML = 'No hay novedades registradas en este dispositivo todavía.';
+                    container.textContent = 'No hay novedades registradas en este dispositivo todavía.';
                     return;
                 }
 
                 // Sort entries by date and time (most recent first)
                 entries.sort((a, b) => new Date(b.fecha + ' ' + b.hora) - new Date(a.fecha + ' ' + a.hora));
 
-                // Create HTML for each entry
-                const htmlEntries = entries.map(entry => `
-                    <div style="border-bottom: 1px solid #e2e8f0; padding: 8px 0;">
-                        <strong>Máquina/Área:</strong> ${entry.maquina}<br>
-                        <strong>Novedad:</strong> ${entry.novedad}<br>
-                        <strong>Duración:</strong> ${entry.duracion}<br>
-                        <strong>Fecha:</strong> ${entry.fecha} <strong>Hora:</strong> ${entry.hora}<br>
-                        <strong>Usuario:</strong> ${entry.usuario} <strong>Cargo:</strong> ${entry.cargo}
-                    </div>
-                `).join('');
+                container.replaceChildren();
+                entries.forEach(entry => {
+                    const report = document.createElement('div');
+                    report.style.borderBottom = '1px solid #e2e8f0';
+                    report.style.padding = '8px 0';
 
-                container.innerHTML = htmlEntries;
+                    const appendField = (label, value) => {
+                        const labelElement = document.createElement('strong');
+                        labelElement.textContent = `${label}: `;
+                        report.append(labelElement, document.createTextNode(value || 'No especificada'));
+                        report.append(document.createElement('br'));
+                    };
+
+                    appendField('Área', entry.area);
+                    if (entry.linea) {
+                        appendField('Línea', entry.linea);
+                    }
+                    appendField('Máquina', entry.maquina);
+                    appendField('Novedad', entry.novedad);
+                    appendField('Duración', entry.duracion);
+                    appendField('Fecha', `${entry.fecha || 'No especificada'} Hora: ${entry.hora || 'No especificada'}`);
+                    appendField('Usuario', `${entry.usuario || 'No especificado'} Cargo: ${entry.cargo || 'No especificado'}`);
+                    container.append(report);
+                });
             }
 
             updateHistorialDisplay(historialContainer, getEntries());
@@ -117,18 +182,38 @@
             form.addEventListener('submit',(event) => {
                 event.preventDefault()
                 hideError()
-                const maquina = document.getElementById('maquina').value.trim(); //extract machine from the task
+                const area = document.getElementById('area').value.trim(); //extract machine from the task
+                const linea = document.getElementById('linea').value.trim();
+                const maquina = document.getElementById('maquina').value.trim();
                 const novedad =  document.getElementById('novedad').value.trim(); //extract the description
                 const duracion = document.getElementById('duracion').value.trim(); //extract the duration of the task
                 const fecha = new Date().toLocaleDateString(); //extract the current date and time
                 const hora = new Date().toLocaleTimeString(); //extract the current time
                 
-                if (maquina === ""){
-                    showError("Especifique el nombre de la maquina o area afectada")
-                    const input = document.getElementById('maquina')
+                if (area === ""){
+                    showError("Especifique el nombre del área afectada")
+                    const input = document.getElementById('area')
                     input.classList.add('input-error');
                     setTimeout(() => {
                         input.classList.remove('input-error');
+                    }, 1000);
+                    return;
+                }
+
+                if (lineaSelect.required && linea === ""){
+                    showError("Seleccione la línea de Extrusion");
+                    lineaSelect.classList.add('input-error');
+                    setTimeout(() => {
+                        lineaSelect.classList.remove('input-error');
+                    }, 1000);
+                    return;
+                }
+
+                if (maquina === ""){
+                    showError("Especifique la máquina afectada");
+                    maquinaSelect.classList.add('input-error');
+                    setTimeout(() => {
+                        maquinaSelect.classList.remove('input-error');
                     }, 1000);
                     return;
                 }
@@ -154,6 +239,8 @@
                 }
 
                 const newEntry = {
+                    area,
+                    linea,
                     maquina,
                     novedad,
                     duracion,
@@ -173,6 +260,7 @@
 
                 // Clear form fields after successful submission
                 form.reset();
+                areaSelect.dispatchEvent(new Event('change'));
             })
         });
     </script>
@@ -197,9 +285,31 @@
 
         <form id="bitacoraForm" novalidate>
             <!-- Selección de Máquina / Área -->
-            <div class="input-group" style="margin-bottom: 20px;">
-                <label for="maquina">Máquina o Área afectada:</label>
-                <input type="text" id="maquina" placeholder="Ej. Extrusora 68, Horno" required>
+            <div class="input-group">
+                <label for="area">Área General:</label>
+                <div class="select-wrapper">
+                    <select name="area" id="area" required>
+                        <option value="">Seleccione un área</option>
+                    </select>
+                </div>
+            </div> 
+
+            <div class="input-group" id="lineaGroup" hidden>
+                <label for="linea">Línea:</label>
+                <div class="select-wrapper">
+                    <select name="linea" id="linea">
+                        <option value="">Seleccione una línea</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="maquina">Máquina:</label>
+                <div class="select-wrapper">
+                    <select name="maquina" id="maquina" required>
+                        <option value="">Seleccione una máquina</option>
+                    </select>
+                </div>
             </div>
 
             <!-- Descripción Técnica de la Novedad -->
