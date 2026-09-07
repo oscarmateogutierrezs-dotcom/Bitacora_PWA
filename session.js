@@ -17,6 +17,16 @@ function showCompatibilityMessage() {
 showCompatibilityMessage();
 
 const SESSION_MARKER = 'session_active_2026';
+const ENTRIES_STORAGE_KEY = 'bitacora_entries';
+
+function deleteAllEntries() {
+	try {
+		localStorage.removeItem(ENTRIES_STORAGE_KEY);
+	} catch {
+		return false;
+	}
+	return true;
+}
 
 function encodeToken(value) {
 	if (!SESSION_APIS_SUPPORTED) {
@@ -82,6 +92,26 @@ function clearSessionToken() {
 	}
 
 	return true;
+}
+
+function getEntries() {
+	try {
+		const entries = JSON.parse(localStorage.getItem(ENTRIES_STORAGE_KEY) || '[]');
+		return Array.isArray(entries) ? entries : [];
+	} catch {
+		return [];
+	}
+}
+
+function saveEntry(entry) {
+	try {
+		const entries = getEntries();
+		entries.push(entry);
+		localStorage.setItem(ENTRIES_STORAGE_KEY, JSON.stringify(entries));
+		return true;
+	} catch {
+		return false;
+	}
 }
 
 function requestPrecacheStatus(serviceWorker, timeout = 3000) {

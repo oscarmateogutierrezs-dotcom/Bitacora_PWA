@@ -59,6 +59,7 @@
             //const fecha = sessionData.fecha; //extract date from the task
             const errorAlert = document.getElementById('form-error');
             const errorDesc = document.getElementById('form-error-desc');
+            const historialContainer = document.getElementById('historialContainer');
 
             // Helper: Show error notification
             function showError(message) {
@@ -75,6 +76,31 @@
             document.getElementById('welcome-msg').innerText = `Bienvenido, ${user}!`;
             document.getElementById('cargo-display').innerText = `Oficio registrado: ${cargo}`;
 
+            function updateHistorialDisplay(container, entries) {
+                if (!entries || entries.length === 0) {
+                    container.innerHTML = 'No hay novedades registradas en este dispositivo todavía.';
+                    return;
+                }
+
+                // Sort entries by date and time (most recent first)
+                entries.sort((a, b) => new Date(b.fecha + ' ' + b.hora) - new Date(a.fecha + ' ' + a.hora));
+
+                // Create HTML for each entry
+                const htmlEntries = entries.map(entry => `
+                    <div style="border-bottom: 1px solid #e2e8f0; padding: 8px 0;">
+                        <strong>Máquina/Área:</strong> ${entry.maquina}<br>
+                        <strong>Novedad:</strong> ${entry.novedad}<br>
+                        <strong>Duración:</strong> ${entry.duracion}<br>
+                        <strong>Fecha:</strong> ${entry.fecha} <strong>Hora:</strong> ${entry.hora}<br>
+                        <strong>Usuario:</strong> ${entry.usuario} <strong>Cargo:</strong> ${entry.cargo}
+                    </div>
+                `).join('');
+
+                container.innerHTML = htmlEntries;
+            }
+
+            updateHistorialDisplay(historialContainer, getEntries());
+
             // Log Out button logic
             document.getElementById('logoutBtn').addEventListener('click', () => {
                 // CORREGIDO: Eliminamos los datos reales de sesión actuales
@@ -84,6 +110,8 @@
                 }
 
                 window.location.href ="login.html";
+
+                deleteAllEntries(); // Clear local entries on logout
             });
 
             form.addEventListener('submit',(event) => {
@@ -92,6 +120,8 @@
                 const maquina = document.getElementById('maquina').value.trim(); //extract machine from the task
                 const novedad =  document.getElementById('novedad').value.trim(); //extract the description
                 const duracion = document.getElementById('duracion').value.trim(); //extract the duration of the task
+                const fecha = new Date().toLocaleDateString(); //extract the current date and time
+                const hora = new Date().toLocaleTimeString(); //extract the current time
                 
                 if (maquina === ""){
                     showError("Especifique el nombre de la maquina o area afectada")
@@ -122,6 +152,27 @@
                     }, 1000);
                     return;
                 }
+
+                const newEntry = {
+                    maquina,
+                    novedad,
+                    duracion,
+                    fecha,
+                    hora,
+                    usuario: user,
+                    cargo
+                };
+
+                if (!saveEntry(newEntry)) {
+                    showError("No se pudo guardar la novedad en este dispositivo.");
+                    return;
+                }
+
+                // Update the historial display
+                updateHistorialDisplay(historialContainer, getEntries());
+
+                // Clear form fields after successful submission
+                form.reset();
             })
         });
     </script>
@@ -167,7 +218,7 @@
 
         <!-- Historial de Novedades Local -->
         <h3 style="margin-top: 32px;">Historial de Reportes Recientes</h3>
-        <div id="historial-container" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; min-height: 50px; font-size: 14px; color: #64748b;">
+        <div id="historialContainer" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; min-height: 50px; font-size: 14px; color: #64748b;">
             No hay novedades registradas en este dispositivo todavía.
         </div>
 
