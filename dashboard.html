@@ -149,15 +149,17 @@
                         report.append(document.createElement('br'));
                     };
 
-                    appendField('Área', entry.area);
-                    if (entry.linea) {
-                        appendField('Línea', entry.linea);
+                    if (!entry.linea) {
+                        appendField('Área', entry.area);                        
+                    } else{
+                        appendField('Area', `${entry.area} - ${entry.linea}`);
                     }
                     appendField('Máquina', entry.maquina);
                     appendField('Novedad', entry.novedad);
                     appendField('Duración', entry.duracion);
-                    appendField('Fecha', `${entry.fecha || 'No especificada'} Hora: ${entry.hora || 'No especificada'}`);
-                    appendField('Usuario', `${entry.usuario || 'No especificado'}`);
+                    appendField('Fecha', entry.fecha);
+                    appendField('Hora', entry.hora);
+                    appendField('Usuario', entry.usuario);
                     appendField('Cargo', entry.cargo);
                     container.append(report);
                 });
@@ -379,9 +381,7 @@
 
         <!-- Historial de Novedades Local -->
         <h3 style="margin-top: 32px;">Historial de Reportes Recientes</h3>
-        <div id="historialContainer" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; min-height: 50px; font-size: 14px; color: #64748b;">
-            No hay novedades registradas en este dispositivo todavía.
-        </div>
+        <div id="historialContainer" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; min-height: 50px; font-size: 14px; color: #64748b;"></div>
 
         <!-- Botón de Salida -->
         <button id="logoutBtn" style="background-color: #dc2626; margin-top: 32px;">Cerrar Sesión</button>
