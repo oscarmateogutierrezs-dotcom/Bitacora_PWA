@@ -106,7 +106,16 @@ function getEntries() {
 function saveEntry(entry) {
 	try {
 		const entries = getEntries();
-		entries.push(entry);
+		const existingIndex = entry.submissionId
+			? entries.findIndex(savedEntry => savedEntry.submissionId === entry.submissionId)
+			: -1;
+
+		if (existingIndex >= 0) {
+			entries[existingIndex] = entry;
+		} else {
+			entries.push(entry);
+		}
+
 		localStorage.setItem(ENTRIES_STORAGE_KEY, JSON.stringify(entries));
 		return true;
 	} catch {

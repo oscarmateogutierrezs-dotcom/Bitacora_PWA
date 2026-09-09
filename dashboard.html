@@ -59,6 +59,7 @@
             const cargo = sessionData.cargo;
             const errorAlert = document.getElementById('form-error');
             const errorDesc = document.getElementById('form-error-desc');
+            const statusMessage = document.getElementById('form-status');
             const historialContainer = document.getElementById('historialContainer');
             const areaSelect = document.getElementById('area');
             const lineaGroup = document.getElementById('lineaGroup');
@@ -66,6 +67,15 @@
             const maquinaSelect = document.getElementById('maquina');
             const submitButton = form.querySelector('button[type="submit"]');
             let isSubmitting = false;
+            let activeSubmissionId = null;
+
+            function createSubmissionId() {
+                if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+                    return crypto.randomUUID();
+                }
+
+                return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+            }
 
             function resetSubmitButton() {
                 isSubmitting = false;
@@ -83,6 +93,11 @@
             function hideError() {
                 errorAlert.style.display = 'none';
                 errorDesc.innerText = '';
+            }
+
+            function showStatus(message) {
+                statusMessage.innerText = message;
+                statusMessage.hidden = false;
             }
 
             function fillSelect(select, options, placeholder) {
@@ -173,13 +188,38 @@
             }
 
             async function sendEntryToGoogleSheets(entry) {
-                return fetch(GOOGLE_SHEETS_WEB_APP_URL, {
+                const payload = JSON.stringify(entry);
+
+                if (navigator.sendBeacon) {
+                    const queued = navigator.sendBeacon(
+                        GOOGLE_SHEETS_WEB_APP_URL,
+                        new Blob([payload], { type: 'text/plain;charset=utf-8' })
+                    );
+
+                    if (queued) {
+                        return {
+                            transportComplete: true,
+                            confirmed: false,
+                            background: true
+                        };
+                    }
+                }
+
+                const request = fetch(GOOGLE_SHEETS_WEB_APP_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(entry),
+                    body: payload,
                     mode: 'no-cors',
                     keepalive: true
+                }).then(response => ({
+                    confirmed: response.type !== 'opaque' && response.ok,
+                    transportComplete: response.type === 'opaque' || response.ok
+                }));
+                const timeout = new Promise((resolve, reject) => {
+                    setTimeout(() => reject(new Error('Tiempo de espera agotado')), 10000);
                 });
+
+                return Promise.race([request, timeout]);
             }
 
             updateHistorialDisplay(historialContainer, getEntries());
@@ -204,6 +244,7 @@
                 }
 
                 hideError()
+                statusMessage.hidden = true;
                 const area = document.getElementById('area').value.trim(); //extract machine from the task
                 const linea = document.getElementById('linea').value.trim();
                 const maquina = document.getElementById('maquina').value.trim();
@@ -301,7 +342,9 @@
                     return;
                 }
 
+                activeSubmissionId = activeSubmissionId || createSubmissionId();
                 const newEntry = {
+                    submissionId: activeSubmissionId,
                     area: linea ? `${area} - ${linea}` : area,
                     maquina,
                     novedad,
@@ -318,16 +361,20 @@
                 submitButton.disabled = true;
                 submitButton.textContent = 'Guardando...';
 
-                if (!saveEntry(newEntry)) {
-                    showError("No se pudo guardar la novedad en este dispositivo.");
+                let result;
+                try {
+                    result = await sendEntryToGoogleSheets(newEntry);
+                    if (!result.transportComplete) {
+                        throw new Error('Google Sheets rechazó el reporte.');
+                    }
+                } catch {
+                    showError('No se pudo completar el envío. El reporte no se marcó como guardado; puedes reintentarlo.');
                     resetSubmitButton();
                     return;
                 }
 
-                try {
-                    await sendEntryToGoogleSheets(newEntry);
-                } catch {
-                    showError('El reporte se guardó en este dispositivo, pero no se pudo enviar a Google Sheets.');
+                if (!saveEntry(newEntry)) {
+                    showError("Google Sheets recibió la solicitud, pero no se pudo guardar el historial local.");
                     resetSubmitButton();
                     return;
                 }
@@ -338,6 +385,12 @@
                 // Clear form fields after successful submission
                 form.reset();
                 areaSelect.dispatchEvent(new Event('change'));
+                showStatus(result.background
+                    ? 'Solicitud enviada en segundo plano. Confirma la fila en Google Sheets.'
+                    : (result.confirmed
+                        ? 'Google Sheets confirmó el reporte.'
+                        : 'Solicitud enviada. Google Sheets no permite leer la confirmación desde este navegador.'));
+                activeSubmissionId = null;
                 resetSubmitButton();
             })
         });
@@ -360,6 +413,7 @@
         <div id="form-error" style="display: none; background-color: #fef2f2; border: 1px solid #fee2e2; color: #991b1b; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 14px;">
             <strong>Error:</strong> <span id="form-error-desc"></span>
         </div>
+        <div id="form-status" role="status" aria-live="polite" hidden style="background-color: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 14px;"></div>
 
         <form id="bitacoraForm" novalidate>
             <!-- Selección de Máquina / Área -->
