@@ -47,6 +47,8 @@
                 return;
             }
 
+            const GOOGLE_SHEETS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyQY8718j74saEvYXbQ0DEMcxGX6s8It__NYVh5viXQZ8Qx_EWKrTvXXlH1lSsnFH211g/exec';
+
             if (!sessionData) {
                 return;
             }
@@ -62,6 +64,14 @@
             const lineaGroup = document.getElementById('lineaGroup');
             const lineaSelect = document.getElementById('linea');
             const maquinaSelect = document.getElementById('maquina');
+            const submitButton = form.querySelector('button[type="submit"]');
+            let isSubmitting = false;
+
+            function resetSubmitButton() {
+                isSubmitting = false;
+                submitButton.disabled = false;
+                submitButton.textContent = 'Guardar Reporte';
+            }
 
             // Helper: Show error notification
             function showError(message) {
@@ -149,11 +159,8 @@
                         report.append(document.createElement('br'));
                     };
 
-                    if (!entry.linea) {
-                        appendField('Área', entry.area);                        
-                    } else{
-                        appendField('Area', `${entry.area} - ${entry.linea}`);
-                    }
+                    const areaDisplay = entry.linea ? `${entry.area} - ${entry.linea}` : entry.area;
+                    appendField('Área', areaDisplay);
                     appendField('Máquina', entry.maquina);
                     appendField('Novedad', entry.novedad);
                     appendField('Duración', entry.duracion);
@@ -162,6 +169,16 @@
                     appendField('Usuario', entry.usuario);
                     appendField('Cargo', entry.cargo);
                     container.append(report);
+                });
+            }
+
+            async function sendEntryToGoogleSheets(entry) {
+                return fetch(GOOGLE_SHEETS_WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(entry),
+                    mode: 'no-cors',
+                    keepalive: true
                 });
             }
 
@@ -180,8 +197,12 @@
                 deleteAllEntries(); // Clear local entries on logout
             });
 
-            form.addEventListener('submit',(event) => {
+            form.addEventListener('submit', async (event) => {
                 event.preventDefault()
+                if (isSubmitting) {
+                    return;
+                }
+
                 hideError()
                 const area = document.getElementById('area').value.trim(); //extract machine from the task
                 const linea = document.getElementById('linea').value.trim();
@@ -254,7 +275,7 @@
                     return;
                 }
 
-                if ((parseInt(duracionHoras) === 0 || parseInt(duracionMinutos) === 0)) {
+                if ((parseInt(duracionHoras || '0') === 0 && parseInt(duracionMinutos || '0') === 0)) {
                     showError("La duración no puede ser cero horas y cero minutos");
                     const inputs = [
                         document.getElementById('duracionHoras'),
@@ -281,8 +302,7 @@
                 }
 
                 const newEntry = {
-                    area,
-                    linea,
+                    area: linea ? `${area} - ${linea}` : area,
                     maquina,
                     novedad,
                     duracion,
@@ -294,8 +314,21 @@
                     cargo
                 };
 
+                isSubmitting = true;
+                submitButton.disabled = true;
+                submitButton.textContent = 'Guardando...';
+
                 if (!saveEntry(newEntry)) {
                     showError("No se pudo guardar la novedad en este dispositivo.");
+                    resetSubmitButton();
+                    return;
+                }
+
+                try {
+                    await sendEntryToGoogleSheets(newEntry);
+                } catch {
+                    showError('El reporte se guardó en este dispositivo, pero no se pudo enviar a Google Sheets.');
+                    resetSubmitButton();
                     return;
                 }
 
@@ -305,6 +338,7 @@
                 // Clear form fields after successful submission
                 form.reset();
                 areaSelect.dispatchEvent(new Event('change'));
+                resetSubmitButton();
             })
         });
     </script>
@@ -359,7 +393,7 @@
             <!-- Descripción Técnica de la Novedad -->
             <div class="input-group" style="margin-bottom: 20px;">
                 <label for="novedad">Descripción de la novedad o falla:</label>
-                <textarea id="novedad" placeholder="Describa brevemente la actividad realizada..." style="width: 100%; min-height: 100px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 16px; font-family: inherit; box-sizing: border-box; resize: vertical;" required></textarea>
+                <textarea lang="es" id="novedad" placeholder="Describa brevemente la actividad realizada..." style="width: 100%; min-height: 100px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 16px; font-family: inherit; box-sizing: border-box; resize: vertical;" required></textarea>
             </div>
             <!-- Duración del Mantenimiento -->
             <div class="input-group" style="margin-bottom: 20px;">
