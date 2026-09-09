@@ -232,9 +232,10 @@
                     return;
                 }
 
+                deleteAllEntries(); // Clear local entries on logout
+
                 window.location.href ="login.html";
 
-                deleteAllEntries(); // Clear local entries on logout
             });
 
             form.addEventListener('submit', async (event) => {
@@ -316,8 +317,8 @@
                     return;
                 }
 
-                if ((parseInt(duracionHoras || '0') === 0 && parseInt(duracionMinutos || '0') === 0)) {
-                    showError("La duración no puede ser cero horas y cero minutos");
+                if (duracionHoras === "" && duracionMinutos === ""){
+                    showError("Ingrese las horas, los minutos o ambos para la duración")
                     const inputs = [
                         document.getElementById('duracionHoras'),
                         document.getElementById('duracionMinutos')
@@ -329,8 +330,8 @@
                     return;
                 }
 
-                if (duracionHoras === "" && duracionMinutos === ""){
-                    showError("Ingrese las horas, los minutos o ambos para la duración")
+                if ((parseInt(duracionHoras || '0') === 0 && parseInt(duracionMinutos || '0') === 0)) {
+                    showError("La duración no puede ser cero horas y cero minutos");
                     const inputs = [
                         document.getElementById('duracionHoras'),
                         document.getElementById('duracionMinutos')
