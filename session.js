@@ -19,6 +19,10 @@ showCompatibilityMessage();
 const SESSION_MARKER = 'session_active_2026';
 const ENTRIES_STORAGE_KEY = 'bitacora_entries';
 
+function isOffline() {
+	return typeof navigator !== 'undefined' && navigator.onLine === false;
+}
+
 function deleteAllEntries() {
 	try {
 		localStorage.removeItem(ENTRIES_STORAGE_KEY);

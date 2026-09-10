@@ -33,6 +33,9 @@
         } else {
             try {
                 sessionData = parseSessionToken(token);
+                if (isOffline()) {
+                    window.location.href = 'login.html';
+                }
             } catch (e) {
                 // Si el usuario inventó el token en la consola, el atob() fallará o no tendrá la firma
                 clearSessionToken();
@@ -241,6 +244,11 @@
             form.addEventListener('submit', async (event) => {
                 event.preventDefault()
                 if (isSubmitting) {
+                    return;
+                }
+
+                if (isOffline()) {
+                    showError('Sin conexión', 'No se puede registrar la novedad porque no hay conexión a internet.');
                     return;
                 }
 

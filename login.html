@@ -32,7 +32,9 @@
             if (token) {
                 try {
                     parseSessionToken(token);
-                    redirectToDashboard();
+                    if (!isOffline()) {
+                        redirectToDashboard();
+                    }
                 } catch (e) {
                     // Si el token fue manipulado en la consola, limpia todo
                     clearSessionToken();
@@ -49,9 +51,18 @@
                     disableUnsupportedControls(document);
                     return;
                 }
+
+                if (isOffline()) {
+                    showError("Sin conexión", "Conéctese a internet para ingresar y registrar novedades.");
+                }
                 
                 form.addEventListener('submit', (event) => {
                     event.preventDefault(); 
+
+                    if (isOffline()) {
+                        showError("Sin conexión", "Conéctese a internet para ingresar y registrar novedades.");
+                        return;
+                    }
                     
                     //Capture the values
                     const usernameValue = document.getElementById('nombre').value.trim();
@@ -127,7 +138,7 @@
 
                 <div class="input-group">
                     <label for="nombre">Nombre:</label>
-                    <input type="text" name="nombre" id="nombre" placeholder="Ej. Ramiro" required>
+                    <input type="text" name="nombre" id="nombre" placeholder="Ej. Oscar Gutiérrez" required>
                 </div>                
                 <div class="input-group">
                     <label for="cargo">Cargo:</label>
@@ -136,7 +147,10 @@
                             <option value="">Seleccione un cargo</option>
                             <option value="Mecánico">Mecánico</option>
                             <option value="Eléctrico">Eléctrico</option>
-                            <option value="Supervisor">Supervisor</option>
+                            <option value="Soldador">Soldador</option>
+                            <option value="Nuematico">Nuematico</option>
+                            <option value="Metalmecanico">Metalmecanico</option>
+                            <option value="Obra Civil">Obra Civil</option>
                         </select>
                     </div>
                 </div>  
