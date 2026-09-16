@@ -159,6 +159,20 @@ test('page status handling reveals a precache error', () => {
   assert.equal(message.hidden, false);
 });
 
+test('local file pages do not show a service worker error', () => {
+  const sessionCode = fs.readFileSync('session.js', 'utf8');
+  const context = { Promise, location: { protocol: 'file:' } };
+  vm.createContext(context);
+  vm.runInContext(sessionCode, context);
+
+  const message = { hidden: true };
+  context.showServiceWorkerError(new Error('Service workers are unavailable'), {
+    getElementById: () => message
+  });
+
+  assert.equal(message.hidden, true);
+});
+
 test('unsupported browsers receive a message and disabled controls', () => {
   const sessionCode = fs.readFileSync('session.js', 'utf8');
   let readyHandler;

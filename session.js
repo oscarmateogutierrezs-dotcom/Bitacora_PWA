@@ -137,10 +137,14 @@ function requestPrecacheStatus(serviceWorker, timeout = 3000) {
 }
 
 function showServiceWorkerError(error, documentObject = document) {
+	const protocol = typeof location !== 'undefined' ? location.protocol : '';
+	if (protocol === 'file:') {
+		return;
+	}
+
 	const message = documentObject.getElementById('service-worker-error');
 	if (message) {
-		const protocol = typeof location !== 'undefined' ? location.protocol : '';
-		if (error?.name === 'SecurityError' || protocol === 'file:') {
+		if (error?.name === 'SecurityError') {
 			message.textContent = 'Esta instalación no puede activar el modo sin conexión. El APK debe abrir la aplicación desde una URL HTTPS.';
 		}
 		message.hidden = false;
