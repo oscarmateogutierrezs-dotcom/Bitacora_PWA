@@ -149,10 +149,16 @@
             ]
         },
         {
-            "nombreA":"Recepcion",
-            "maquinas":[
-                {"nombreM": "placeholder"}
-            ]
+            "nombreA":"Taller"
+        },
+        {
+            "nombreA":"Robot"
+        },
+        {
+            "nombreA":"Recepción"
+        },
+        {
+            "nombreA":"Otro (temporal)"
         }
     ]
 }

@@ -17,7 +17,7 @@
                     .then(() => requestPrecacheStatus(navigator.serviceWorker))
                     .catch(err => {
                         console.log('Service Worker registration failed: ', err);
-                        showServiceWorkerError();
+                        showServiceWorkerError(err);
                     });
                 navigator.serviceWorker.addEventListener('message', (event) => {
                     handlePrecacheStatus(event);
@@ -53,16 +53,13 @@
                 }
 
                 if (isOffline()) {
-                    showError("Sin conexión", "Conéctese a internet para ingresar y registrar novedades.");
+                    showError("Sin conexión", "No hay conexión a internet. Cierre la aplicación, conéctese a la red e inténtelo nuevamente.");
+                    disableUnsupportedControls(document);
+                    return;
                 }
                 
                 form.addEventListener('submit', (event) => {
                     event.preventDefault(); 
-
-                    if (isOffline()) {
-                        showError("Sin conexión", "Conéctese a internet para ingresar y registrar novedades.");
-                        return;
-                    }
                     
                     //Capture the values
                     const usernameValue = document.getElementById('nombre').value.trim();

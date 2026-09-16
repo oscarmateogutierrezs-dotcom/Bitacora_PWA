@@ -16,7 +16,7 @@
                     .then(() => requestPrecacheStatus(navigator.serviceWorker))
                     .catch(err => {
                         console.log('Service Worker registration failed: ', err);
-                        showServiceWorkerError();
+                        showServiceWorkerError(err);
                     });
                 navigator.serviceWorker.addEventListener('message', (event) => {
                     handlePrecacheStatus(event);
@@ -50,6 +50,12 @@
                 return;
             }
 
+            if (isOffline()) {
+                showError('Sin conexión', 'No hay conexión a internet. Cierre la aplicación, conéctese a la red e inténtelo nuevamente.');
+                disableUnsupportedControls(document);
+                return;
+            }
+
             const GOOGLE_SHEETS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyQY8718j74saEvYXbQ0DEMcxGX6s8It__NYVh5viXQZ8Qx_EWKrTvXXlH1lSsnFH211g/exec';
 
             if (!sessionData) {
@@ -67,7 +73,11 @@
             const areaSelect = document.getElementById('area');
             const lineaGroup = document.getElementById('lineaGroup');
             const lineaSelect = document.getElementById('linea');
+            const maquinaGroup = document.getElementById('maquinaGroup');
             const maquinaSelect = document.getElementById('maquina');
+            const duracionGroup = document.getElementById('duracionGroup');
+            const duracionHorasInput = document.getElementById('duracionHoras');
+            const duracionMinutosInput = document.getElementById('duracionMinutos');
             const submitButton = form.querySelector('button[type="submit"]');
             let isSubmitting = false;
             let activeSubmissionId = null;
@@ -124,9 +134,13 @@
                     lineaGroup.hidden = true;
                     lineaSelect.required = false;
                     maquinaSelect.disabled = true;
+                    maquinaGroup.hidden = true;
+                    maquinaSelect.required = false;
+                    duracionGroup.hidden = true;
 
                     areaSelect.addEventListener('change', () => {
                         const selectedArea = areas.find(area => area.nombreA === areaSelect.value);
+                        const isAreaOnly = selectedArea?.nombreA === 'Taller' || selectedArea?.nombreA === 'Robot' || selectedArea?.nombreA === 'Otro (temporal)' || selectedArea?.nombreA === 'Recepción';
                         const lines = selectedArea?.lineas || [];
                         const hasLines = lines.length > 0;
                         lineaGroup.hidden = !hasLines;
@@ -134,7 +148,15 @@
                         fillSelect(lineaSelect, lines.map(linea => linea.nombreL), 'Seleccione una línea');
                         const machines = hasLines ? [] : (selectedArea?.maquinas || []);
                         fillSelect(maquinaSelect, machines.map(machine => machine.nombreM), 'Seleccione una máquina');
-                        maquinaSelect.disabled = hasLines || machines.length === 0;
+                        maquinaGroup.hidden = isAreaOnly;
+                        maquinaSelect.required = !isAreaOnly;
+                        maquinaSelect.disabled = isAreaOnly || hasLines || machines.length === 0;
+                        duracionGroup.hidden = isAreaOnly;
+                        if (isAreaOnly) {
+                            maquinaSelect.value = '';
+                            duracionHorasInput.value = '';
+                            duracionMinutosInput.value = '';
+                        }
                     });
 
                     lineaSelect.addEventListener('change', () => {
@@ -143,6 +165,7 @@
                         const machines = selectedLine?.maquinas || [];
                         fillSelect(maquinaSelect, machines.map(machine => machine.nombreM), 'Seleccione una máquina');
                         maquinaSelect.disabled = machines.length === 0;
+                        maquinaSelect.required = true;
                     });
                 } catch (error) {
                     showError('No se pudo cargar la lista de áreas y máquinas.');
@@ -248,7 +271,7 @@
                 }
 
                 if (isOffline()) {
-                    showError('Sin conexión', 'No se puede registrar la novedad porque no hay conexión a internet.');
+                    showError('Sin conexión', 'No se puede enviar la novedad porque no hay conexión a internet.');
                     return;
                 }
 
@@ -306,7 +329,7 @@
                     return;
                 }
 
-                if (maquina === ""){
+                if (!maquinaGroup.hidden && maquina === ""){
                     showError("Especifique la máquina afectada");
                     maquinaSelect.classList.add('input-error');
                     setTimeout(() => {
@@ -325,7 +348,7 @@
                     return;
                 }
 
-                if (duracionHoras === "" && duracionMinutos === ""){
+                if (!duracionGroup.hidden && duracionHoras === "" && duracionMinutos === ""){
                     showError("Ingrese las horas, los minutos o ambos para la duración")
                     const inputs = [
                         document.getElementById('duracionHoras'),
@@ -338,7 +361,7 @@
                     return;
                 }
 
-                if ((parseInt(duracionHoras || '0') === 0 && parseInt(duracionMinutos || '0') === 0)) {
+                if (!duracionGroup.hidden && (parseInt(duracionHoras || '0') === 0 && parseInt(duracionMinutos || '0') === 0)) {
                     showError("La duración no puede ser cero horas y cero minutos");
                     const inputs = [
                         document.getElementById('duracionHoras'),
@@ -444,7 +467,7 @@
                 </div>
             </div>
 
-            <div class="input-group">
+            <div class="input-group" id="maquinaGroup" hidden>
                 <label for="maquina">Máquina:</label>
                 <div class="select-wrapper">
                     <select name="maquina" id="maquina" required>
@@ -459,7 +482,7 @@
                 <textarea lang="es" id="novedad" placeholder="Describa brevemente la actividad realizada..." style="width: 100%; min-height: 100px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 16px; font-family: inherit; box-sizing: border-box; resize: vertical;" required></textarea>
             </div>
             <!-- Duración del Mantenimiento -->
-            <div class="input-group" style="margin-bottom: 20px;">
+            <div class="input-group" id="duracionGroup" style="margin-bottom: 20px;" hidden>
                 <label for="duracionHoras">Duración del mantenimiento:</label>
                 <div class="duration-fields">
                     <div>
