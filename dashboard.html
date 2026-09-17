@@ -140,7 +140,7 @@
 
                     areaSelect.addEventListener('change', () => {
                         const selectedArea = areas.find(area => area.nombreA === areaSelect.value);
-                        const isAreaOnly = selectedArea?.nombreA === 'Taller' || selectedArea?.nombreA === 'Robot' || selectedArea?.nombreA === 'Otro (temporal)' || selectedArea?.nombreA === 'Recepción';
+                        const isAreaOnly = selectedArea?.nombreA === 'Taller' || selectedArea?.nombreA === 'Otro' || selectedArea?.nombreA === 'Despacho';
                         const lines = selectedArea?.lineas || [];
                         const hasLines = lines.length > 0;
                         lineaGroup.hidden = !hasLines;

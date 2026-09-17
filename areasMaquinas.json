@@ -152,13 +152,20 @@
             "nombreA":"Taller"
         },
         {
-            "nombreA":"Robot"
+            "nombreA":"Robot",
+            "maquinas":[
+                {"nombreM": "Desvidor de cadenas"},
+                {"nombreM": "Mesas de cadenas 1"},
+                {"nombreM": "Mesas de cadenas 2"},
+                {"nombreM": "Arrastrador Hidrualico"},
+                {"nombreM": "Robot (Brazo hidrualico)"}
+            ]
         },
         {
-            "nombreA":"Recepción"
+            "nombreA":"Despacho"
         },
         {
-            "nombreA":"Otro (temporal)"
+            "nombreA":"Otro"
         }
     ]
 }
