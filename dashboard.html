@@ -184,8 +184,8 @@
                     return;
                 }
 
-                // Sort entries by date and time (most recent first)
-                entries.sort((a, b) => new Date(b.fecha + ' ' + b.hora) - new Date(a.fecha + ' ' + a.hora));
+                // Show the most recently stored report first.
+                entries.reverse();
 
                 container.replaceChildren();
                 entries.forEach(entry => {
@@ -271,7 +271,7 @@
                 }
 
                 if (isOffline()) {
-                    showError('Sin conexión', 'No se puede enviar la novedad porque no hay conexión a internet.');
+                    showError('Sin conexión, No se puede enviar la novedad porque no hay conexión a internet.');
                     return;
                 }
 
