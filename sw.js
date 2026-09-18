@@ -1,8 +1,9 @@
-const CACHE_NAME = 'enterprise-v5';
+const CACHE_NAME = 'enterprise-v6';
 const META_CACHE_NAME = `${CACHE_NAME}-meta`;
 const ASSETS = [
   'login.html',
   'dashboard.html',
+  'dashboard.js',
   'offline.html',
   'session.js',
   'areasMaquinas.json',
