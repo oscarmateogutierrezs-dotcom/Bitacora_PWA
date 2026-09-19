@@ -280,40 +280,37 @@ button:active {
 }
 
 .welcome-header {
-    position: relative;
     display: flex;
+    flex-direction: column;
     align-items: center;
+    justify-content: center;
     width: 100%;
     min-height: 60px;
-    gap: 12px;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
+    text-align: center;
 }
 
 .welcome-logo {
-    position: relative;
-    z-index: 1;
     display: block;
-    width: 54px;
-    height: 54px;
-    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 10px;
     background-image: url("logo/logo_nosotros.jpg");
-    background-size: contain;
-    background-repeat: no-repeat;
+    background-size: cover;
     background-position: center;
+    background-repeat: no-repeat;
     border-radius: 10px;
 }
 
 #welcome-msg {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+    position: static;
     margin: 0;
     text-align: center;
     line-height: 1.1;
     font-size: 22px;
     font-weight: 700;
     color: #0f172a;
-    white-space: nowrap;
+    white-space: normal;
 }
 
 @media (max-width: 480px) {
