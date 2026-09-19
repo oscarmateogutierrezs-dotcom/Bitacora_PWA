@@ -23,6 +23,15 @@ body {
     box-sizing: border-box; /* Ensures padding doesn't stretch the box */
 }
 
+.logo {
+    display: block;
+    width: 120px;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto 18px;
+    border-radius: 12px;
+}
+
 /* Corporate branding header */
 h2 {
     display: block;        /* Forces it to behave as a normal block */
@@ -268,6 +277,43 @@ button:active {
 #compatibility-error:not([hidden]),
 #service-worker-error:not([hidden]) {
     display: block;
+}
+
+.welcome-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 60px;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.welcome-logo {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 54px;
+    height: 54px;
+    flex-shrink: 0;
+    background-image: url("logo/logo_nosotros.jpg");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border-radius: 10px;
+}
+
+#welcome-msg {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    text-align: center;
+    line-height: 1.1;
+    font-size: 22px;
+    font-weight: 700;
+    color: #0f172a;
+    white-space: nowrap;
 }
 
 @media (max-width: 480px) {
