@@ -3,7 +3,8 @@ body {
     background-color: #f4f6f9;
     color: #1e293b;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    justify-content: flex-start;
     align-items: center;
     min-height: 100vh;
     margin: 0;
@@ -288,18 +289,6 @@ button:active {
     min-height: 60px;
     margin-bottom: 12px;
     text-align: center;
-}
-
-.welcome-logo {
-    display: block;
-    width: 52px;
-    height: 52px;
-    margin: 0 auto 10px;
-    background-image: url("logo/logo_nosotros.jpg");
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    border-radius: 10px;
 }
 
 #welcome-msg {

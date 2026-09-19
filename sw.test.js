@@ -138,10 +138,11 @@ test('offline query-string requests use the canonical cache key', async () => {
 });
 
 test('page integrations bound status requests with a timeout', () => {
-  for (const file of ['login.html', 'dashboard.html']) {
-    const html = fs.readFileSync(file, 'utf8');
-    assert.match(html, /requestPrecacheStatus\(navigator\.serviceWorker\)/);
-  }
+  const loginHtml = fs.readFileSync('login.html', 'utf8');
+  const dashboardCode = fs.readFileSync('dashboard.js', 'utf8');
+
+  assert.match(loginHtml, /requestPrecacheStatus\(navigator\.serviceWorker\)/);
+  assert.match(dashboardCode, /requestPrecacheStatus\(navigator\.serviceWorker\)/);
 });
 
 test('page status handling reveals a precache error', () => {
