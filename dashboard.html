@@ -70,6 +70,19 @@
                 <label for="novedad">Descripción de la novedad o falla:</label>
                 <textarea lang="es" id="novedad" placeholder="Describa brevemente la actividad realizada..." style="width: 100%; min-height: 100px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 16px; font-family: inherit; box-sizing: border-box; resize: vertical;" required></textarea>
             </div>
+
+            <div class="input-group">
+                <label for="imagen">Fotografía o imagen (opcional):</label>
+                <div class="image-actions">
+                    <input type="file" id="imagen" class="file-input" accept="image/*">
+                    <label for="imagen" class="file-picker">Seleccionar imagen</label>
+                    <input type="file" id="camara" class="file-input" accept="image/*" capture="environment">
+                    <label for="camara" class="file-picker file-picker-camera">Abrir cámara</label>
+                </div>
+                <small id="imagenAyuda" class="file-help" hidden>Puede adjuntar una foto como evidencia del reporte.</small>
+                <img id="imagenVistaPrevia" class="image-preview" alt="Vista previa de la imagen seleccionada" hidden>
+            </div>
+
             <!-- Duración del Mantenimiento -->
             <div class="input-group" id="duracionGroup" style="margin-bottom: 20px;" hidden>
                 <label for="duracionHoras">Duración del mantenimiento:</label>

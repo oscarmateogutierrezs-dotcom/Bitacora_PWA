@@ -69,9 +69,15 @@ window.addEventListener('DOMContentLoaded', () => {
     const duracionGroup = document.getElementById('duracionGroup');
     const duracionHorasInput = document.getElementById('duracionHoras');
     const duracionMinutosInput = document.getElementById('duracionMinutos');
+    const imagenInput = document.getElementById('imagen');
+    const camaraInput = document.getElementById('camara');
+    const imagenAyuda = document.getElementById('imagenAyuda');
+    const imagenVistaPrevia = document.getElementById('imagenVistaPrevia');
     const submitButton = form.querySelector('button[type="submit"]');
     let isSubmitting = false;
     let activeSubmissionId = null;
+    let selectedImageFile = null;
+    let previewImageUrl = null;
 
     function createSubmissionId() {
         if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -109,6 +115,72 @@ window.addEventListener('DOMContentLoaded', () => {
         select.append(new Option(placeholder, ''));
         options.forEach(option => select.append(new Option(option, option)));
     }
+
+    function compressImage(file, {
+        maxDataLength = 85000,
+        maxDimension = 1280,
+        minDimension = 200,
+        qualities = [0.75, 0.6, 0.45, 0.3]
+    } = {}) {
+        return new Promise((resolve, reject) => {
+            const imageUrl = URL.createObjectURL(file);
+            const image = new Image();
+            image.onload = () => {
+                URL.revokeObjectURL(imageUrl);
+                try {
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+
+                    if (!context) {
+                        throw new Error('El navegador no pudo preparar la imagen.');
+                    }
+
+                    for (let dimension = maxDimension; dimension >= minDimension; dimension = Math.floor(dimension * 0.8)) {
+                        const scale = Math.min(1, dimension / Math.max(image.width, image.height));
+                        canvas.width = Math.max(1, Math.round(image.width * scale));
+                        canvas.height = Math.max(1, Math.round(image.height * scale));
+                        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+                        for (const quality of qualities) {
+                            const imageData = canvas.toDataURL('image/jpeg', quality);
+                            if (imageData.length <= maxDataLength) {
+                                resolve(imageData);
+                                return;
+                            }
+                        }
+                    }
+                    reject(new Error('La imagen no se pudo reducir lo suficiente. Pruebe con otra foto.'));
+                } catch {
+                    reject(new Error('No se pudo procesar la imagen. Pruebe con otra foto.'));
+                }
+            };
+            image.onerror = () => {
+                URL.revokeObjectURL(imageUrl);
+                reject(new Error('El formato de la imagen no es compatible. Pruebe con una foto JPEG o PNG.'));
+            };
+            image.src = imageUrl;
+        });
+    }
+
+    function handleImageSelection(event) {
+        const file = event.currentTarget.files[0];
+        if (!file) {
+            return;
+        }
+
+        selectedImageFile = file;
+        (event.currentTarget === imagenInput ? camaraInput : imagenInput).value = '';
+        if (previewImageUrl) {
+            URL.revokeObjectURL(previewImageUrl);
+        }
+        previewImageUrl = URL.createObjectURL(file);
+        imagenVistaPrevia.src = previewImageUrl;
+        imagenVistaPrevia.hidden = false;
+        imagenAyuda.textContent = 'La imagen se comprimirá al guardar el reporte.';
+    }
+
+    imagenInput.addEventListener('change', handleImageSelection);
+    camaraInput.addEventListener('change', handleImageSelection);
 
     function getSelectedMachines() {
         if (lubricacionCheck.checked) {
@@ -231,6 +303,13 @@ window.addEventListener('DOMContentLoaded', () => {
             appendField('Hora', entry.hora);
             appendField('Usuario', entry.usuario);
             appendField('Cargo', entry.cargo);
+            if (entry.imagen) {
+                const image = document.createElement('img');
+                image.src = entry.imagen;
+                image.alt = 'Imagen adjunta al reporte';
+                image.className = 'image-preview';
+                report.append(image);
+            }
             container.append(report);
         });
     }
@@ -238,33 +317,17 @@ window.addEventListener('DOMContentLoaded', () => {
     async function sendEntryToGoogleSheets(entry) {
         const payload = JSON.stringify(entry);
 
-        if (navigator.sendBeacon) {
-            const queued = navigator.sendBeacon(
-                GOOGLE_SHEETS_WEB_APP_URL,
-                new Blob([payload], { type: 'text/plain;charset=utf-8' })
-            );
-
-            if (queued) {
-                return {
-                    transportComplete: true,
-                    confirmed: false,
-                    background: true
-                };
-            }
-        }
-
         const request = fetch(GOOGLE_SHEETS_WEB_APP_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: payload,
-            mode: 'no-cors',
-            keepalive: true
+            mode: 'no-cors'
         }).then(response => ({
             confirmed: response.type !== 'opaque' && response.ok,
             transportComplete: response.type === 'opaque' || response.ok
         }));
         const timeout = new Promise((resolve, reject) => {
-            setTimeout(() => reject(new Error('Tiempo de espera agotado')), 10000);
+            setTimeout(() => reject(new Error('Tiempo de espera agotado')), 30000);
         });
 
         return Promise.race([request, timeout]);
@@ -397,6 +460,23 @@ window.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        let imagen = '';
+        let imagenHistorial = '';
+        if (selectedImageFile) {
+            try {
+                imagen = await compressImage(selectedImageFile);
+                imagenHistorial = await compressImage(selectedImageFile, {
+                    maxDataLength: 30000,
+                    maxDimension: 320,
+                    minDimension: 80,
+                    qualities: [0.45, 0.3, 0.2]
+                });
+            } catch (error) {
+                showError(error.message);
+                return;
+            }
+        }
+
         activeSubmissionId = activeSubmissionId || createSubmissionId();
         const newEntry = {
             submissionId: activeSubmissionId,
@@ -406,6 +486,7 @@ window.addEventListener('DOMContentLoaded', () => {
             duracion,
             duracionHoras,
             duracionMinutos,
+            imagen,
             fecha,
             hora,
             usuario: user,
@@ -428,7 +509,7 @@ window.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (!saveEntry(newEntry)) {
+        if (!saveEntry({ ...newEntry, imagen: imagenHistorial })) {
             showError("Google Sheets recibió la solicitud, pero no se pudo guardar el historial local.");
             resetSubmitButton();
             return;
@@ -439,6 +520,14 @@ window.addEventListener('DOMContentLoaded', () => {
 
         // Clear form fields after successful submission
         form.reset();
+        selectedImageFile = null;
+        if (previewImageUrl) {
+            URL.revokeObjectURL(previewImageUrl);
+            previewImageUrl = null;
+        }
+        imagenVistaPrevia.hidden = true;
+        imagenVistaPrevia.removeAttribute('src');
+        imagenAyuda.textContent = 'Puede adjuntar una foto como evidencia del reporte.';
         lubricacionCheck.dispatchEvent(new Event('change'));
         areaSelect.dispatchEvent(new Event('change'));
         showStatus(result.background
