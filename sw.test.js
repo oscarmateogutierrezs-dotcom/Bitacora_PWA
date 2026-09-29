@@ -160,6 +160,46 @@ test('page status handling reveals a precache error', () => {
   assert.equal(message.hidden, false);
 });
 
+test('theme toggle follows system preference and persists the selected theme', () => {
+  const sessionCode = fs.readFileSync('session.js', 'utf8');
+  const listeners = {};
+  const storage = new Map();
+  const buttonListeners = {};
+  const toggle = {
+    addEventListener: (event, handler) => { buttonListeners[event] = handler; },
+    setAttribute: (name, value) => { toggle[name] = value; }
+  };
+  const themeColor = {};
+  const context = {
+    Promise,
+    TextEncoder,
+    TextDecoder,
+    localStorage: {
+      getItem: (key) => storage.get(key) || null,
+      setItem: (key, value) => storage.set(key, value)
+    },
+    matchMedia: () => ({ matches: true }),
+    document: {
+      documentElement: { dataset: {} },
+      addEventListener: (event, handler) => { listeners[event] = handler; },
+      querySelector: (selector) => selector === '[data-theme-toggle]' ? toggle : themeColor
+    }
+  };
+  vm.createContext(context);
+  vm.runInContext(sessionCode, context);
+
+  assert.equal(context.document.documentElement.dataset.theme, 'dark');
+  listeners.DOMContentLoaded();
+  assert.equal(toggle.textContent, '\u2600 Modo claro');
+  buttonListeners.click();
+
+  assert.equal(context.document.documentElement.dataset.theme, 'light');
+  assert.equal(toggle.textContent, '\u263e Modo oscuro');
+  assert.equal(storage.get('bitacora_theme'), 'light');
+  assert.equal(toggle['aria-label'], 'Activar modo oscuro');
+  assert.equal(themeColor.content, '#f4f6f9');
+});
+
 test('local file pages do not show a service worker error', () => {
   const sessionCode = fs.readFileSync('session.js', 'utf8');
   const context = { Promise, location: { protocol: 'file:' } };

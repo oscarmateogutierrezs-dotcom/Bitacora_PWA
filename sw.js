@@ -1,4 +1,4 @@
-const CACHE_NAME = 'enterprise-v7';
+const CACHE_NAME = 'enterprise-v8';
 const META_CACHE_NAME = `${CACHE_NAME}-meta`;
 const ASSETS = [
   'login.html',

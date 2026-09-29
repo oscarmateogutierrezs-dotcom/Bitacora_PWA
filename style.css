@@ -32,6 +32,27 @@ body {
     border-radius: 12px;
 }
 
+.dashboard-topbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.dashboard-topbar .theme-toggle {
+    margin: 0;
+}
+
+.dashboard-logo {
+    display: block;
+    width: 72px;
+    height: 72px;
+    flex: 0 0 72px;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
 /* Corporate branding header */
 h2 {
     display: block;        /* Forces it to behave as a normal block */
@@ -410,4 +431,135 @@ button[type="submit"].is-saving:active {
 .file-picker-camera:hover {
     background-color: #f1f5f9;
     box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.15);
+}
+
+.theme-toggle {
+    display: block;
+    width: auto;
+    min-width: 132px;
+    height: 40px;
+    margin: 0px 0px 16px 10px;
+    padding: 0 12px;
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+    color: #334155;
+    font-size: 14px;
+}
+
+.theme-toggle:hover {
+    background-color: #f1f5f9;
+}
+
+html[data-theme="dark"] {
+    color-scheme: dark;
+}
+
+html[data-theme="dark"] body {
+    background-color: #111827;
+    color: #e5e7eb;
+}
+
+html[data-theme="dark"] .container {
+    background-color: #1f2937;
+    border-color: #374151;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+html[data-theme="dark"] h2,
+html[data-theme="dark"] #welcome-msg {
+    color: #f8fafc;
+}
+
+html[data-theme="dark"] h3,
+html[data-theme="dark"] label,
+html[data-theme="dark"] #cargo-display {
+    color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] .subtitle,
+html[data-theme="dark"] .file-help {
+    color: #9ca3af;
+}
+
+html[data-theme="dark"] input[type="text"],
+html[data-theme="dark"] input[type="number"],
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea {
+    border-color: #4b5563 !important;
+    background-color: #111827 !important;
+    color: #f3f4f6 !important;
+}
+
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+    color: #9ca3af;
+}
+
+html[data-theme="dark"] .machine-options,
+html[data-theme="dark"] #historialContainer,
+html[data-theme="dark"] .image-preview {
+    border-color: #4b5563 !important;
+    background-color: #111827 !important;
+    color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] #form-error,
+html[data-theme="dark"] #error-alert {
+    border-color: #7f1d1d !important;
+    background-color: #450a0a !important;
+    color: #fecaca !important;
+}
+
+html[data-theme="dark"] #form-status {
+    border-color: #065f46 !important;
+    background-color: #064e3b !important;
+    color: #a7f3d0 !important;
+}
+
+html[data-theme="dark"] hr {
+    border-top-color: #374151 !important;
+}
+
+html[data-theme="dark"] #compatibility-error,
+html[data-theme="dark"] #service-worker-error {
+    border-color: #854d0e;
+    background-color: #422006;
+    color: #fde68a;
+}
+
+html[data-theme="dark"] .file-picker {
+    border-color: #0369a1;
+    background-color: #082f49;
+    color: #bae6fd;
+}
+
+html[data-theme="dark"] .file-picker-camera {
+    border-color: #4b5563;
+    background-color: #1f2937;
+    color: #e5e7eb;
+}
+
+html[data-theme="dark"] .file-picker:hover,
+html[data-theme="dark"] .file-picker:focus-within {
+    background-color: #0c4a6e;
+}
+
+html[data-theme="dark"] .file-picker-camera:hover {
+    background-color: #374151;
+}
+
+html[data-theme="dark"] button[type="submit"].is-saving,
+html[data-theme="dark"] button[type="submit"].is-saving:hover,
+html[data-theme="dark"] button[type="submit"].is-saving:active {
+    background-color: #1f2937 !important;
+}
+
+html[data-theme="dark"] .theme-toggle {
+    border-color: #4b5563;
+    background-color: #374151;
+    color: #f3f4f6;
+}
+
+html[data-theme="dark"] .theme-toggle:hover {
+    background-color: #4b5563;
 }
