@@ -91,6 +91,7 @@ window.addEventListener('DOMContentLoaded', () => {
         isSubmitting = false;
         submitButton.disabled = false;
         submitButton.textContent = 'Guardar Reporte';
+        submitButton.classList.remove('is-saving');
     }
 
     // Helper: Show error notification
@@ -496,6 +497,7 @@ window.addEventListener('DOMContentLoaded', () => {
         isSubmitting = true;
         submitButton.disabled = true;
         submitButton.textContent = 'Guardando...';
+        submitButton.classList.add('is-saving');
 
         let result;
         try {
@@ -534,7 +536,7 @@ window.addEventListener('DOMContentLoaded', () => {
             ? 'Solicitud enviada en segundo plano. Confirma la fila en Google Sheets.'
             : (result.confirmed
                 ? 'Google Sheets confirmó el reporte.'
-                : 'Solicitud enviada. Google Sheets no permite leer la confirmación desde este navegador.'));
+                : 'Solicitud enviada.'));
         activeSubmissionId = null;
         resetSubmitButton();
     })

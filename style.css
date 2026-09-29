@@ -259,6 +259,16 @@ button:active {
     background-color: #0f172a;
 }
 
+button[type="submit"].is-saving,
+button[type="submit"].is-saving:hover,
+button[type="submit"].is-saving:active {
+    background-color: #ffffff !important;
+    color: #039b47;
+    border: 1px solid #039b47;
+    cursor: wait;
+    opacity: 1;
+}
+
 #compatibility-error,
 #service-worker-error {
     width: 100%;
