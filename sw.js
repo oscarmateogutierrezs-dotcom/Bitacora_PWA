@@ -1,4 +1,4 @@
-const CACHE_NAME = 'enterprise-v9';
+const CACHE_NAME = 'enterprise-v10';
 const META_CACHE_NAME = `${CACHE_NAME}-meta`;
 const ASSETS = [
   'login.html',
@@ -11,7 +11,8 @@ const ASSETS = [
   'manifest.json',
   'icons/icon-192.png',
   'icons/icon-512.png',
-  'icons/icon-maskable-512.png'
+  'icons/icon-maskable-512.png',
+  'logo/logo_nosotros.jpg'
 ];
 const CACHEABLE_PATHS = new Set(
   ASSETS.map((asset) => new URL(asset, self.location).pathname)
@@ -20,7 +21,6 @@ const REQUIRED_ASSETS = ASSETS.filter((asset) => !asset.startsWith('icons/'));
 
 // Install lifecycle event
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('Pre-catching archivos esenciales de la bitacora')
@@ -36,15 +36,24 @@ self.addEventListener('install', (event) => {
         const failedRequiredAsset = failedAssets.find(({ asset }) =>
           REQUIRED_ASSETS.includes(asset)
         );
+        if (failedRequiredAsset) {
+          throw new Error(`No se pudo precachear el recurso obligatorio: ${failedRequiredAsset.asset}`);
+        }
+
         const status = new Response(JSON.stringify({
           type: 'PRECACHE_STATUS',
-          ok: !failedRequiredAsset
+          ok: true
         }), { headers: { 'Content-Type': 'application/json' } });
         return caches.open(META_CACHE_NAME).then((metaCache) =>
           metaCache.put(new Request(new URL('precache-status', self.location)), status)
         );
       });
-    })
+    }).then(() => self.skipWaiting()).catch((error) =>
+      Promise.allSettled([
+        caches.delete(CACHE_NAME),
+        caches.delete(META_CACHE_NAME)
+      ]).then(() => { throw error; })
+    )
   );
 });
 

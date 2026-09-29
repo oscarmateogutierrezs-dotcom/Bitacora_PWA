@@ -6,8 +6,6 @@ const vm = require('node:vm');
 function createWorker(failingAssets = []) {
   const handlers = {};
   const workerLocation = 'https://example.test/app/sw.js';
-  const assetEntries = new Map();
-  const metaEntries = new Map();
   const workerUrl = new URL(workerLocation);
   const createCache = (entries) => ({
     add: async (asset) => {
@@ -27,8 +25,8 @@ function createWorker(failingAssets = []) {
     put: async (request, response) => entries.set(request.url, response)
   });
   const caches = new Map();
-  const assetCache = createCache(assetEntries);
-  const metaCache = createCache(metaEntries);
+  const cacheEntries = new Map();
+  const workerState = { skipWaitingCalls: 0 };
   const context = {
     Request,
     Response,
@@ -41,7 +39,7 @@ function createWorker(failingAssets = []) {
         origin: workerUrl.origin,
         toString: () => workerLocation
       },
-      skipWaiting: async () => {},
+      skipWaiting: async () => { workerState.skipWaitingCalls += 1; },
       addEventListener: (type, handler) => { handlers[type] = handler; },
       clients: {
         claim: async () => {},
@@ -51,11 +49,25 @@ function createWorker(failingAssets = []) {
     caches: {
       open: async (name) => {
         if (!caches.has(name)) {
-          caches.set(name, name.endsWith('-meta') ? metaCache : assetCache);
+          const entries = new Map();
+          cacheEntries.set(name, entries);
+          caches.set(name, createCache(entries));
         }
         return caches.get(name);
       },
-      match: (request) => assetCache.match(request),
+      delete: async (name) => {
+        cacheEntries.delete(name);
+        return caches.delete(name);
+      },
+      match: async (request) => {
+        for (const cache of caches.values()) {
+          const response = await cache.match(request);
+          if (response) {
+            return response;
+          }
+        }
+        return undefined;
+      },
       keys: async () => [...caches.keys()]
     },
     fetch: async () => {
@@ -65,7 +77,7 @@ function createWorker(failingAssets = []) {
 
   vm.createContext(context);
   vm.runInContext(fs.readFileSync('sw.js', 'utf8'), context);
-  return { handlers, assetEntries, metaEntries, context };
+  return { handlers, context, workerState };
 }
 
 test('precache status can be requested by a later page', async () => {
@@ -86,22 +98,18 @@ test('precache status can be requested by a later page', async () => {
   assert.deepEqual(postedStatus, { type: 'PRECACHE_STATUS', ok: true });
 });
 
-test('required precache failures are reported as unhealthy', async () => {
-  const { handlers } = createWorker(['style.css']);
+test('required precache failures reject installation and preserve the active cache', async () => {
+  const { handlers, context, workerState } = createWorker(['style.css']);
+  const activeCache = await context.caches.open('enterprise-v9');
+  const previousDashboard = new Request('https://example.test/app/dashboard.html');
+  await activeCache.put(previousDashboard, new Response('previous dashboard'));
   let installPromise;
   handlers.install({ waitUntil: (promise) => { installPromise = promise; } });
-  await installPromise;
+  await assert.rejects(installPromise, /recurso obligatorio/);
 
-  let postedStatus;
-  let messagePromise;
-  handlers.message({
-    data: { type: 'GET_PRECACHE_STATUS' },
-    source: { postMessage: (status) => { postedStatus = status; } },
-    waitUntil: (promise) => { messagePromise = promise; }
-  });
-  await messagePromise;
-
-  assert.deepEqual(postedStatus, { type: 'PRECACHE_STATUS', ok: false });
+  assert.equal(workerState.skipWaitingCalls, 0);
+  assert.deepEqual(await context.caches.keys(), ['enterprise-v9']);
+  assert.equal(await (await activeCache.match(previousDashboard)).text(), 'previous dashboard');
 });
 
 test('optional icon failures do not mark precache unhealthy', async () => {
@@ -252,13 +260,13 @@ test('status requests resolve when the worker never becomes ready', async () => 
 });
 
 test('uncached offline navigation serves offline.html', async () => {
-  const { handlers, context } = createWorker(['dashboard.html']);
+  const { handlers, context } = createWorker();
   let installPromise;
   handlers.install({ waitUntil: (promise) => { installPromise = promise; } });
   await installPromise;
 
   const response = await vm.runInContext(
-    "getOfflineFallback({ request: { mode: 'navigate' } }, new Request('https://example.test/app/dashboard.html'))",
+    "getOfflineFallback({ request: { mode: 'navigate' } }, new Request('https://example.test/app/missing.html'))",
     context
   );
   assert.equal(await response.text(), 'asset');
