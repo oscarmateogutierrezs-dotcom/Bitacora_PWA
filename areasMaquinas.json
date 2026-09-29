@@ -42,6 +42,18 @@
                         {"nombreM":"Banda #2"},
                         {"nombreM":"Verdes 067"}
                     ]
+                },
+                {
+                    "nombreL":"Linea 067D",
+                    "maquinas":[
+                        {"nombreM":"Banda #9"},
+                        {"nombreM":"Banda #10"},
+                        {"nombreM":"Banda #11"},
+                        {"nombreM":"Verdes 067D"},
+                        {"nombreM":"Cortadora Primaria"},
+                        {"nombreM":"Cortadora Multiple"},
+                        {"nombreM":"Tapete Recibidor"}
+                    ]
                 }
             ]
         },
