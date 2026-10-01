@@ -79,6 +79,8 @@ window.addEventListener('DOMContentLoaded', () => {
     let selectedImageFile = null;
     let selectedImageCompression = null;
     let previewImageUrl = null;
+        let submitErrorTimeout = null;
+    const inFlightSubmissionIds = new Set();
 
     function createSubmissionId() {
         if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -99,6 +101,13 @@ window.addEventListener('DOMContentLoaded', () => {
     function showError(message) {
         errorDesc.innerText = message;
         errorAlert.style.display = 'block';
+        clearTimeout(submitErrorTimeout);
+        submitButton.classList.remove('input-error');
+        void submitButton.offsetWidth;
+        submitButton.classList.add('input-error');
+        submitErrorTimeout = setTimeout(() => {
+            submitButton.classList.remove('input-error');
+        }, 1000);
     }
 
     // Helper: Hide error notification
@@ -318,9 +327,6 @@ window.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Show the most recently stored report first.
-        entries.reverse();
-
         const fragment = document.createDocumentFragment();
         entries.slice().reverse().forEach(entry => {
             const report = document.createElement('div');
@@ -343,6 +349,24 @@ window.addEventListener('DOMContentLoaded', () => {
             appendField('Hora', entry.hora);
             appendField('Usuario', entry.usuario);
             appendField('Cargo', entry.cargo);
+            if (entry.sendStatus) {
+                const statusLabels = {
+                    sending: 'Envío iniciado; resultado pendiente',
+                    unknown: 'Sin confirmación',
+                    confirmed: 'El reporte fue listado con exito',
+                    failed: 'Error de envío; copia local conservada'
+                };
+                appendField('Estado', statusLabels[entry.sendStatus] || 'Pendiente de verificación');
+
+                if (entry.sendStatus !== 'confirmed' && entry.sendStatus !== 'sending') {
+                    const retryButton = document.createElement('button');
+                    retryButton.type = 'button';
+                    retryButton.textContent = 'Reintentar envío';
+                    retryButton.disabled = inFlightSubmissionIds.has(entry.submissionId);
+                    retryButton.addEventListener('click', () => retrySubmission(entry, retryButton));
+                    report.append(retryButton, document.createElement('br'));
+                }
+            }
             if (entry.imagen) {
                 const image = document.createElement('img');
                 image.src = entry.imagen;
@@ -375,6 +399,60 @@ window.addEventListener('DOMContentLoaded', () => {
         });
 
         return Promise.race([request, timeout]).finally(() => clearTimeout(timeoutId));
+    }
+
+    function updateEntrySendStatus(entry, sendStatus) {
+        const savedEntries = saveEntry({ ...entry, sendStatus });
+        if (!savedEntries) {
+            showError('No se pudo actualizar el estado del envío en el historial local.');
+            return;
+        }
+
+        updateHistorialDisplay(historialContainer, savedEntries);
+    }
+
+    function sendEntryInBackground(serverEntry, localEntry) {
+        inFlightSubmissionIds.add(serverEntry.submissionId);
+        sendEntryToGoogleSheets(serverEntry)
+            .then(result => {
+                if (!result.transportComplete) {
+                    throw new Error('No se pudo completar el envío.');
+                }
+
+                const sendStatus = result.confirmed ? 'confirmed' : 'unknown';
+                updateEntrySendStatus(localEntry, sendStatus);
+            })
+            .catch(() => {
+                updateEntrySendStatus(localEntry, 'failed');
+            })
+            .finally(() => {
+                inFlightSubmissionIds.delete(serverEntry.submissionId);
+                updateHistorialDisplay(historialContainer, getEntries());
+            });
+    }
+
+    function retrySubmission(entry, button) {
+        if (isOffline()) {
+            showError('Sin conexión, no se puede enviar el reporte.');
+            return;
+        }
+
+        if (button.disabled) {
+            return;
+        }
+
+        button.disabled = true;
+        const pendingEntry = { ...entry, sendStatus: 'sending' };
+        const savedEntries = saveEntry(pendingEntry);
+        if (!savedEntries) {
+            button.disabled = false;
+            showError('No se pudo actualizar el historial local para reintentar.');
+            return;
+        }
+
+        const { sendStatus, ...serverEntry } = entry;
+        sendEntryInBackground(serverEntry, pendingEntry);
+        updateHistorialDisplay(historialContainer, savedEntries);
     }
 
     updateHistorialDisplay(historialContainer, getEntries());
@@ -539,29 +617,14 @@ window.addEventListener('DOMContentLoaded', () => {
             cargo
         };
 
-        let result;
-        try {
-            result = await sendEntryToGoogleSheets(newEntry);
-            if (!result.transportComplete) {
-                throw new Error('Google Sheets rechazó el reporte.');
-            }
-        } catch {
-            showError('No se pudo completar el envío. El reporte no se marcó como guardado; puedes reintentarlo.');
-            resetSubmitButton();
-            return;
-        }
-
-        const savedEntries = saveEntry({ ...newEntry, imagen: imagenHistorial });
+        const localEntry = { ...newEntry, imagen: imagenHistorial, sendStatus: 'sending' };
+        const savedEntries = saveEntry(localEntry);
         if (!savedEntries) {
-            showError("Google Sheets recibió la solicitud, pero no se pudo guardar el historial local.");
+            showError('No se pudo guardar una copia local del reporte; no se inició el envío. Libera espacio e inténtalo de nuevo.');
             resetSubmitButton();
             return;
         }
 
-        // Update the historial display
-        updateHistorialDisplay(historialContainer, savedEntries);
-
-        // Clear form fields after successful submission
         form.reset();
         selectedImageFile = null;
         selectedImageCompression = null;
@@ -574,12 +637,10 @@ window.addEventListener('DOMContentLoaded', () => {
         imagenAyuda.textContent = 'Puede adjuntar una foto como evidencia del reporte.';
         lubricacionCheck.dispatchEvent(new Event('change'));
         areaSelect.dispatchEvent(new Event('change'));
-        showStatus(result.background
-            ? 'Solicitud enviada en segundo plano. Confirma la fila en Google Sheets.'
-            : (result.confirmed
-                ? 'Google Sheets confirmó el reporte.'
-                : 'Solicitud enviada.'));
         activeSubmissionId = null;
         resetSubmitButton();
+        showStatus('Reporte enviado.');
+        sendEntryInBackground(newEntry, localEntry);
+        updateHistorialDisplay(historialContainer, savedEntries);
     })
 });

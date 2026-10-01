@@ -75,25 +75,12 @@ h2 {
     margin-bottom: 20px;
 }
 
-input.input-error {
+input.input-error,
+textarea.input-error,
+select.input-error,
+button.input-error {
     position: relative;
-    animation: shake.1s linear;
-    animation-iteration-count: 3;
-    border: 1px solid #f87171 !important;
-    box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.15) !important; /* Subtle red shadow */
-}
-
-textarea.input-error {
-    position: relative;
-    animation: shake.1s linear;
-    animation-iteration-count: 3;
-    border: 1px solid #f87171 !important;
-    box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.15) !important; /* Subtle red shadow */
-}
-
-select.input-error {
-    position: relative;
-    animation: shake.1s linear;
+    animation: shake 0.1s linear;
     animation-iteration-count: 3;
     border: 1px solid #f87171 !important;
     box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.15) !important; /* Subtle red shadow */
@@ -117,19 +104,7 @@ label {
 }
 
 /* Accessible inputs for mobile touch (48px height) */
-input[type="text"] {
-    width: 100%;
-    height: 48px; 
-    padding: 0 16px;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    font-size: 16px; /* Prevents iOS auto-zoom on focus */
-    color: #0f172a;
-    background-color: #ffffff;
-    box-sizing: border-box;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
+input[type="text"],
 input[type="number"] {
     width: 100%;
     height: 48px; 
@@ -280,9 +255,8 @@ button:active {
     background-color: #0f172a;
 }
 
-button[type="submit"].is-saving,
-button[type="submit"].is-saving:hover,
-button[type="submit"].is-saving:active {
+
+button[type="submit"]:active {
     background-color: #ffffff !important;
     color: #039b47;
     border: 1px solid #039b47;
