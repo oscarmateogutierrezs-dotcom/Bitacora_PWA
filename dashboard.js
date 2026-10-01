@@ -401,6 +401,40 @@ window.addEventListener('DOMContentLoaded', () => {
         return Promise.race([request, timeout]).finally(() => clearTimeout(timeoutId));
     }
 
+    function requestSubmissionStatus(submissionId, timeoutMs = 10000) {
+        return new Promise((resolve, reject) => {
+            const callbackName = `__bitacoraStatus_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+            const script = document.createElement('script');
+            const endpoint = new URL(GOOGLE_SHEETS_WEB_APP_URL);
+            let timeoutId;
+
+            const cleanup = () => {
+                clearTimeout(timeoutId);
+                script.remove();
+                delete window[callbackName];
+            };
+
+            window[callbackName] = status => {
+                cleanup();
+                resolve(status);
+            };
+            script.onerror = () => {
+                cleanup();
+                reject(new Error('No se pudo consultar el estado del reporte.'));
+            };
+            endpoint.searchParams.set('action', 'status');
+            endpoint.searchParams.set('submissionId', submissionId);
+            endpoint.searchParams.set('callback', callbackName);
+            endpoint.searchParams.set('_', Date.now().toString());
+            script.src = endpoint.toString();
+            timeoutId = setTimeout(() => {
+                cleanup();
+                reject(new Error('La consulta de estado agotó el tiempo de espera.'));
+            }, timeoutMs);
+            document.head.append(script);
+        });
+    }
+
     function updateEntrySendStatus(entry, sendStatus) {
         const savedEntries = saveEntry({ ...entry, sendStatus });
         if (!savedEntries) {
@@ -414,12 +448,22 @@ window.addEventListener('DOMContentLoaded', () => {
     function sendEntryInBackground(serverEntry, localEntry) {
         inFlightSubmissionIds.add(serverEntry.submissionId);
         sendEntryToGoogleSheets(serverEntry)
-            .then(result => {
+            .then(async result => {
                 if (!result.transportComplete) {
                     throw new Error('No se pudo completar el envío.');
                 }
 
-                const sendStatus = result.confirmed ? 'confirmed' : 'unknown';
+                let sendStatus = result.confirmed ? 'confirmed' : 'unknown';
+                if (!result.confirmed) {
+                    try {
+                        const status = await requestSubmissionStatus(serverEntry.submissionId);
+                        sendStatus = status.success
+                            ? (status.processed ? 'confirmed' : 'failed')
+                            : 'unknown';
+                    } catch {
+                        sendStatus = 'unknown';
+                    }
+                }
                 updateEntrySendStatus(localEntry, sendStatus);
             })
             .catch(() => {
@@ -639,7 +683,7 @@ window.addEventListener('DOMContentLoaded', () => {
         areaSelect.dispatchEvent(new Event('change'));
         activeSubmissionId = null;
         resetSubmitButton();
-        showStatus('Reporte enviado.');
+        showStatus('Reporte enviado, esperando confirmación');
         sendEntryInBackground(newEntry, localEntry);
         updateHistorialDisplay(historialContainer, savedEntries);
     })
