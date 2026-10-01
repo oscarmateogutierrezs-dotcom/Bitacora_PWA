@@ -3,7 +3,9 @@ const fs = require('node:fs');
 const test = require('node:test');
 const vm = require('node:vm');
 
-function createWorker(failingAssets = []) {
+function createWorker(failingAssets = [], fetchImplementation = async () => {
+  throw new Error('offline');
+}) {
   const handlers = {};
   const workerLocation = 'https://example.test/app/sw.js';
   const workerUrl = new URL(workerLocation);
@@ -70,9 +72,7 @@ function createWorker(failingAssets = []) {
       },
       keys: async () => [...caches.keys()]
     },
-    fetch: async () => {
-      throw new Error('offline');
-    }
+    fetch: fetchImplementation
   };
 
   vm.createContext(context);
@@ -130,6 +130,35 @@ test('optional icon failures do not mark precache unhealthy', async () => {
   assert.deepEqual(postedStatus, { type: 'PRECACHE_STATUS', ok: true });
 });
 
+test('cached assets return before network revalidation completes', async () => {
+  let resolveFetch;
+  const fetchPromise = new Promise((resolve) => { resolveFetch = resolve; });
+  const { handlers } = createWorker([], () => fetchPromise);
+  let installPromise;
+  handlers.install({ waitUntil: (promise) => { installPromise = promise; } });
+  await installPromise;
+
+  let responsePromise;
+  let refreshPromise;
+  handlers.fetch({
+    request: new Request('https://example.test/app/dashboard.html'),
+    respondWith: (promise) => { responsePromise = promise; },
+    waitUntil: (promise) => { refreshPromise = promise; }
+  });
+
+  let timeoutId;
+  const cachedResponse = await Promise.race([
+    responsePromise,
+    new Promise((resolve, reject) => {
+      timeoutId = setTimeout(() => reject(new Error('Cached response waited for the network')), 100);
+    })
+  ]).finally(() => clearTimeout(timeoutId));
+  assert.equal(await cachedResponse.text(), 'asset');
+
+  resolveFetch(new Response('updated dashboard'));
+  await refreshPromise;
+});
+
 test('offline query-string requests use the canonical cache key', async () => {
   const { handlers } = createWorker();
   let installPromise;
@@ -137,12 +166,15 @@ test('offline query-string requests use the canonical cache key', async () => {
   await installPromise;
 
   let responsePromise;
+  let refreshPromise;
   handlers.fetch({
     request: new Request('https://example.test/app/dashboard.html?version=2'),
-    respondWith: (promise) => { responsePromise = promise; }
+    respondWith: (promise) => { responsePromise = promise; },
+    waitUntil: (promise) => { refreshPromise = promise; }
   });
 
   assert.equal(await (await responsePromise).text(), 'asset');
+  await refreshPromise;
 });
 
 test('page integrations bound status requests with a timeout', () => {
@@ -206,6 +238,25 @@ test('theme toggle follows system preference and persists the selected theme', (
   assert.equal(storage.get('bitacora_theme'), 'light');
   assert.equal(toggle['aria-label'], 'Activar modo oscuro');
   assert.equal(themeColor.content, '#f4f6f9');
+});
+
+test('saving an entry returns the updated history', () => {
+  const sessionCode = fs.readFileSync('session.js', 'utf8');
+  const storage = new Map();
+  const context = {
+    localStorage: {
+      getItem: (key) => storage.get(key) || null,
+      setItem: (key, value) => storage.set(key, value)
+    }
+  };
+  vm.createContext(context);
+  vm.runInContext(sessionCode, context);
+
+  const entry = { submissionId: 'entry-1', novedad: 'Prueba' };
+  const savedEntries = context.saveEntry(entry);
+  assert.equal(savedEntries.length, 1);
+  assert.equal(savedEntries[0].submissionId, entry.submissionId);
+  assert.equal(JSON.parse(storage.get('bitacora_entries')).length, 1);
 });
 
 test('local file pages do not show a service worker error', () => {

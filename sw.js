@@ -101,20 +101,27 @@ self.addEventListener('fetch', (event) => {
 
   const cacheKey = new Request(requestUrl.origin + requestUrl.pathname);
 
-  event.respondWith(
-    fetch(event.request)
+  const networkResponse = fetch(event.request)
       .then((networkResponse) => {
         if (!networkResponse.ok) {
           return networkResponse;
         }
 
         const responseCopy = networkResponse.clone();
-        event.waitUntil(
-          caches.open(CACHE_NAME).then((cache) => cache.put(cacheKey, responseCopy))
-        );
-        return networkResponse;
-      })
-      .catch(() => getOfflineFallback(event, cacheKey))
+        return caches.open(CACHE_NAME)
+          .then((cache) => cache.put(cacheKey, responseCopy))
+          .then(() => networkResponse);
+      });
+
+  event.waitUntil(networkResponse.then(() => undefined, () => undefined));
+  event.respondWith(
+    caches.match(cacheKey).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+
+      return networkResponse.catch(() => getOfflineFallback(event, cacheKey));
+    })
   );
 });
 

@@ -179,7 +179,7 @@ function saveEntry(entry) {
 		}
 
 		localStorage.setItem(ENTRIES_STORAGE_KEY, JSON.stringify(entries));
-		return true;
+		return entries;
 	} catch {
 		return false;
 	}

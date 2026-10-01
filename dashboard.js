@@ -77,6 +77,7 @@ window.addEventListener('DOMContentLoaded', () => {
     let isSubmitting = false;
     let activeSubmissionId = null;
     let selectedImageFile = null;
+    let selectedImageCompression = null;
     let previewImageUrl = null;
 
     function createSubmissionId() {
@@ -117,43 +118,13 @@ window.addEventListener('DOMContentLoaded', () => {
         options.forEach(option => select.append(new Option(option, option)));
     }
 
-    function compressImage(file, {
-        maxDataLength = 85000,
-        maxDimension = 1280,
-        minDimension = 200,
-        qualities = [0.75, 0.6, 0.45, 0.3]
-    } = {}) {
+    function loadImage(file) {
         return new Promise((resolve, reject) => {
             const imageUrl = URL.createObjectURL(file);
             const image = new Image();
             image.onload = () => {
                 URL.revokeObjectURL(imageUrl);
-                try {
-                    const canvas = document.createElement('canvas');
-                    const context = canvas.getContext('2d');
-
-                    if (!context) {
-                        throw new Error('El navegador no pudo preparar la imagen.');
-                    }
-
-                    for (let dimension = maxDimension; dimension >= minDimension; dimension = Math.floor(dimension * 0.8)) {
-                        const scale = Math.min(1, dimension / Math.max(image.width, image.height));
-                        canvas.width = Math.max(1, Math.round(image.width * scale));
-                        canvas.height = Math.max(1, Math.round(image.height * scale));
-                        context.drawImage(image, 0, 0, canvas.width, canvas.height);
-
-                        for (const quality of qualities) {
-                            const imageData = canvas.toDataURL('image/jpeg', quality);
-                            if (imageData.length <= maxDataLength) {
-                                resolve(imageData);
-                                return;
-                            }
-                        }
-                    }
-                    reject(new Error('La imagen no se pudo reducir lo suficiente. Pruebe con otra foto.'));
-                } catch {
-                    reject(new Error('No se pudo procesar la imagen. Pruebe con otra foto.'));
-                }
+                resolve(image);
             };
             image.onerror = () => {
                 URL.revokeObjectURL(imageUrl);
@@ -161,6 +132,63 @@ window.addEventListener('DOMContentLoaded', () => {
             };
             image.src = imageUrl;
         });
+    }
+
+    async function compressImage(image, {
+        maxDataLength = 85000,
+        maxDimension = 1280,
+        minDimension = 200,
+        qualities = [0.75, 0.6, 0.45, 0.3]
+    } = {}) {
+        function canvasToBlob(canvas, quality) {
+            return new Promise((resolve, reject) => {
+                canvas.toBlob(blob => {
+                    if (!blob) {
+                        reject(new Error('No se pudo procesar la imagen. Pruebe con otra foto.'));
+                        return;
+                    }
+
+                    resolve(blob);
+                }, 'image/jpeg', quality);
+            });
+        }
+
+        function blobToDataUrl(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(new Error('No se pudo procesar la imagen. Pruebe con otra foto.'));
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+
+        if (!context) {
+            throw new Error('El navegador no pudo preparar la imagen.');
+        }
+
+        try {
+            for (let dimension = maxDimension; dimension >= minDimension; dimension = Math.floor(dimension * 0.8)) {
+                const scale = Math.min(1, dimension / Math.max(image.width, image.height));
+                canvas.width = Math.max(1, Math.round(image.width * scale));
+                canvas.height = Math.max(1, Math.round(image.height * scale));
+                context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+                for (const quality of qualities) {
+                    const blob = await canvasToBlob(canvas, quality);
+                    const dataUrlLength = 'data:image/jpeg;base64,'.length + 4 * Math.ceil(blob.size / 3);
+                    if (dataUrlLength <= maxDataLength) {
+                        return await blobToDataUrl(blob);
+                    }
+                }
+            }
+        } catch {
+            throw new Error('No se pudo procesar la imagen. Pruebe con otra foto.');
+        }
+
+        throw new Error('La imagen no se pudo reducir lo suficiente. Pruebe con otra foto.');
     }
 
     function handleImageSelection(event) {
@@ -177,7 +205,18 @@ window.addEventListener('DOMContentLoaded', () => {
         previewImageUrl = URL.createObjectURL(file);
         imagenVistaPrevia.src = previewImageUrl;
         imagenVistaPrevia.hidden = false;
-        imagenAyuda.textContent = 'La imagen se comprimirá al guardar el reporte.';
+        imagenAyuda.textContent = 'La imagen se prepara mientras completas el reporte.';
+        selectedImageCompression = loadImage(file)
+            .then(image => Promise.all([
+                compressImage(image),
+                compressImage(image, {
+                    maxDataLength: 30000,
+                    maxDimension: 320,
+                    minDimension: 80,
+                    qualities: [0.45, 0.3, 0.2]
+                })
+            ]))
+            .then(([reportImage, historyImage]) => ({ reportImage, historyImage }), error => ({ error }));
     }
 
     imagenInput.addEventListener('change', handleImageSelection);
@@ -282,8 +321,8 @@ window.addEventListener('DOMContentLoaded', () => {
         // Show the most recently stored report first.
         entries.reverse();
 
-        container.replaceChildren();
-        entries.forEach(entry => {
+        const fragment = document.createDocumentFragment();
+        entries.slice().reverse().forEach(entry => {
             const report = document.createElement('div');
             report.style.borderBottom = '1px solid #e2e8f0';
             report.style.padding = '8px 0';
@@ -309,10 +348,13 @@ window.addEventListener('DOMContentLoaded', () => {
                 image.src = entry.imagen;
                 image.alt = 'Imagen adjunta al reporte';
                 image.className = 'image-preview';
+                image.loading = 'lazy';
+                image.decoding = 'async';
                 report.append(image);
             }
-            container.append(report);
+            fragment.append(report);
         });
+        container.replaceChildren(fragment);
     }
 
     async function sendEntryToGoogleSheets(entry) {
@@ -327,11 +369,12 @@ window.addEventListener('DOMContentLoaded', () => {
             confirmed: response.type !== 'opaque' && response.ok,
             transportComplete: response.type === 'opaque' || response.ok
         }));
+        let timeoutId;
         const timeout = new Promise((resolve, reject) => {
-            setTimeout(() => reject(new Error('Tiempo de espera agotado')), 30000);
+            timeoutId = setTimeout(() => reject(new Error('Tiempo de espera agotado')), 30000);
         });
 
-        return Promise.race([request, timeout]);
+        return Promise.race([request, timeout]).finally(() => clearTimeout(timeoutId));
     }
 
     updateHistorialDisplay(historialContainer, getEntries());
@@ -461,21 +504,23 @@ window.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        isSubmitting = true;
+        submitButton.disabled = true;
+        submitButton.textContent = 'Guardando...';
+        submitButton.classList.add('is-saving');
+
         let imagen = '';
         let imagenHistorial = '';
         if (selectedImageFile) {
-            try {
-                imagen = await compressImage(selectedImageFile);
-                imagenHistorial = await compressImage(selectedImageFile, {
-                    maxDataLength: 30000,
-                    maxDimension: 320,
-                    minDimension: 80,
-                    qualities: [0.45, 0.3, 0.2]
-                });
-            } catch (error) {
-                showError(error.message);
+            const compressionResult = await selectedImageCompression;
+            if (compressionResult.error) {
+                showError(compressionResult.error.message);
+                resetSubmitButton();
                 return;
             }
+
+            imagen = compressionResult.reportImage;
+            imagenHistorial = compressionResult.historyImage;
         }
 
         activeSubmissionId = activeSubmissionId || createSubmissionId();
@@ -494,11 +539,6 @@ window.addEventListener('DOMContentLoaded', () => {
             cargo
         };
 
-        isSubmitting = true;
-        submitButton.disabled = true;
-        submitButton.textContent = 'Guardando...';
-        submitButton.classList.add('is-saving');
-
         let result;
         try {
             result = await sendEntryToGoogleSheets(newEntry);
@@ -511,18 +551,20 @@ window.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (!saveEntry({ ...newEntry, imagen: imagenHistorial })) {
+        const savedEntries = saveEntry({ ...newEntry, imagen: imagenHistorial });
+        if (!savedEntries) {
             showError("Google Sheets recibió la solicitud, pero no se pudo guardar el historial local.");
             resetSubmitButton();
             return;
         }
 
         // Update the historial display
-        updateHistorialDisplay(historialContainer, getEntries());
+        updateHistorialDisplay(historialContainer, savedEntries);
 
         // Clear form fields after successful submission
         form.reset();
         selectedImageFile = null;
+        selectedImageCompression = null;
         if (previewImageUrl) {
             URL.revokeObjectURL(previewImageUrl);
             previewImageUrl = null;
