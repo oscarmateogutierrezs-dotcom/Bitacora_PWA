@@ -1,93 +1,15 @@
 {
     "area":[
         {
-            "nombreA":"Molienda",
-            "maquinas": [
-                {"nombreM": "Gabinete Electrico"},
-                {"nombreM": "Cajon Alimentador"},
-                {"nombreM": "Molino"},
-                {"nombreM": "Banda #1"},
-                {"nombreM": "Banda #2"},
-                {"nombreM": "Filtro de polvo"},
-                {"nombreM": "Zaranda"}
-            ]
-            
-        },
-        {
-            "nombreA":"Extrusion",
-            "lineas":[
-                {
-                    "nombreL": "Linea 068",
-                    "maquinas":[
-                        {"nombreM":"Cajon Alimentador A"},
-                        {"nombreM":"Banda #1"},
-                        {"nombreM":"Banda #2"},
-                        {"nombreM":"Banda #3"},
-                        {"nombreM":"Banda #5"},
-                        {"nombreM":"Banda #6"},
-                        {"nombreM":"Amasadora"},
-                        {"nombreM":"Laminador"},
-                        {"nombreM":"Verdes 068"},
-                        {"nombreM":"Tapete 1"},
-                        {"nombreM":"Tapete 2"},
-                        {"nombreM":"Cortadora Primaria"},
-                        {"nombreM":"Cortadora Multiple"}
-                    ]
-                },
-                {
-                    "nombreL":"Linea 067",
-                    "maquinas":[
-                        {"nombreM":"Cajon Alimentador"},
-                        {"nombreM":"Banda #1"},
-                        {"nombreM":"Banda #2"},
-                        {"nombreM":"Verdes 067"}
-                    ]
-                },
-                {
-                    "nombreL":"Linea 067D",
-                    "maquinas":[
-                        {"nombreM":"Banda #9"},
-                        {"nombreM":"Banda #10"},
-                        {"nombreM":"Banda #11"},
-                        {"nombreM":"Verdes 067D"},
-                        {"nombreM":"Cortadora Primaria"},
-                        {"nombreM":"Cortadora Multiple"},
-                        {"nombreM":"Tapete Recibidor"}
-                    ]
-                }
-            ]
-        },
-        {
             "nombreA":"Cargue Carretillas",
             "maquinas":[
-                {"nombreM": "Acumuladora de Levas"},
-                {"nombreM": "Cadenas Acumuladoras"},
-                {"nombreM": "Tapete Pulmon"},
-                {"nombreM": "Banda Elevadora"},
-                {"nombreM": "Pala"},
-                {"nombreM": "Arrastrador Entrada"},
-                {"nombreM": "Arrastrador Cargue"}
-            ]
-        },
-        {
-            "nombreA":"Secadero",
-            "maquinas":[
-                {"nombreM": "Gabinete Electrico"},
-                {"nombreM":"Puerta Entrada"},
-                {"nombreM":"Puerta Salida"},
-                {"nombreM":"Transbordador Entrada"},
-                {"nombreM":"Transbordador Salida"},
-                {"nombreM":"Traslacion 1"},
-                {"nombreM":"Traslacion 2"},
-                {"nombreM":"Traslacion 3"},
-                {"nombreM":"Extractor 1"},
-                {"nombreM":"Extractor 2"},
-                {"nombreM":"Extractor 3"},
-                {"nombreM":"Blower"},
-                {"nombreM":"Quemador"},
-                {"nombreM":"Canal 1"},
-                {"nombreM":"Canal 2"},
-                {"nombreM":"Canal 3"}
+                {"nombreM":"Acumuladora de Levas"},
+                {"nombreM":"Arrastrador Cargue"},
+                {"nombreM":"Arrastrador Entrada"},
+                {"nombreM":"Banda Elevadora"},
+                {"nombreM":"Cadenas Acumuladoras"},
+                {"nombreM":"Pala"},
+                {"nombreM":"Tapete Pulmon"}
             ]
         },
         {
@@ -95,89 +17,173 @@
             "maquinas":[
                 {"nombreM":"Arrastrador Descargue"},
                 {"nombreM":"Arrastrador Pala"},
+                {"nombreM":"Cadenas Acumuladoras"},
                 {"nombreM":"Pala"},
-                {"nombreM":"Rodillos Elevadores"},
-                {"nombreM":"Tapete Pulmon"},
                 {"nombreM":"Rodillos Acumuladores"},
-                {"nombreM":"Cadenas Acumuladoras"}
-            ]
-        },
-        {
-            "nombreA":"Encañe",
-            "maquinas":[
-                {"nombreM":"Guillotina"},
-                {"nombreM":"Cadena Guillotina"},
-                {"nombreM":"Rodillos Desviadores"},
-                {"nombreM":"Banda Encañe"},
-                {"nombreM":"Banda Encañe Manual"},
-                {"nombreM":"Piston Encañe"},
-                {"nombreM":"Guaya Encañe"},
-                {"nombreM":"Rana"},
-                {"nombreM":"Reductor de Encañe"}
-            ]
-        },
-        {
-            "nombreA":"Horno",
-            "maquinas":[
-                {"nombreM": "Gabinete Electrico"},
-                {"nombreM":"Transbordador Entrada"},
-                {"nombreM":"Transbordador Salida"},
-                {"nombreM":"Reductor Guaya Prehorno"},
-                {"nombreM":"Puerta Entrada 1"},
-                {"nombreM":"Puerta Entrada 2"},
-                {"nombreM":"Puerta Salida"},
-                {"nombreM":"Piston Impulsor"},
-                {"nombreM":"Carbojet 1"},
-                {"nombreM":"Carbojet 2"},
-                {"nombreM":"Carbojet 3"},
-                {"nombreM":"Carbojet 4"},
-                {"nombreM":"Carbojet 5"},
-                {"nombreM":"Quemadores de Gas"},
-                {"nombreM":"Ventilador Tiro 1"},
-                {"nombreM":"Ventilador Tiro 2"},
-                {"nombreM":"Contra V 1"},
-                {"nombreM":"Ventilador Foso"},
-                {"nombreM":"Vagonas"}
+                {"nombreM":"Rodillos Elevadores"},
+                {"nombreM":"Tapete Pulmon"}
             ]
         },
         {
             "nombreA":"Desencañe",
             "maquinas":[
-                {"nombreM": "Reductor Guaya Desencañe"}
-            ]
-        },
-        {
-            "nombreA":"Maquinaria Amarilla",
-            "maquinas":[
-                {"nombreM": "Cargador SEM 1"},
-                {"nombreM": "Cargador SEM 2"},
-                {"nombreM": "Cargador Komatsu w70"},
-                {"nombreM": "Cargador Caterpillar 420"},
-                {"nombreM": "Bulldozer D65 EX"},
-                {"nombreM": "Tractor Nissan"},
-                {"nombreM": "Montacargas Nissan"},
-                {"nombreM": "Montacargas Toyota"},
-                {"nombreM": "Minicargador Rhino RS50"}
-            ]
-        },
-        {
-            "nombreA":"Taller"
-        },
-        {
-            "nombreA":"Robot",
-            "maquinas":[
-                {"nombreM": "Desvidor de cadenas"},
-                {"nombreM": "Mesas de cadenas 1"},
-                {"nombreM": "Mesas de cadenas 2"},
-                {"nombreM": "Arrastrador Hidrualico"},
-                {"nombreM": "Robot (Brazo hidrualico)"}
+                {"nombreM":"Reductor Guaya Desencañe"}
             ]
         },
         {
             "nombreA":"Despacho"
         },
         {
+            "nombreA":"Encañe",
+            "maquinas":[
+                {"nombreM":"Banda Encañe"},
+                {"nombreM":"Banda Encañe Manual"},
+                {"nombreM":"Cadena Guillotina"},
+                {"nombreM":"Ducto Guaya de encañe"},
+                {"nombreM":"Gato (empujar vagona de encañe)"},
+                {"nombreM":"Guaya Encañe"},
+                {"nombreM":"Guillotina"},
+                {"nombreM":"Mesa Agrupadora"},
+                {"nombreM":"Mesa Elevadora"}, 
+                {"nombreM":"Pala descargadora"},
+                {"nombreM":"Piston Encañe"},
+                {"nombreM":"Rana"},
+                {"nombreM":"Reductor de Encañe"},
+                {"nombreM":"Rodillos Desviadores"}
+            ]
+        },
+        {
+            "nombreA":"Extrusion",
+            "lineas":[
+                {
+                    "nombreL": "Linea 067",
+                    "maquinas":[
+                        {"nombreM":"Banda #1"},
+                        {"nombreM":"Banda #2"},
+                        {"nombreM":"Cajon Alimentador"},
+                        {"nombreM":"Cortadora Multiple"},
+                        {"nombreM":"Cortadora Primaria"},
+                        {"nombreM":"Verdes 067"}
+                    ]
+                },
+                {
+                    "nombreL": "Linea 067D",
+                    "maquinas":[
+                        {"nombreM":"Banda #9"},
+                        {"nombreM":"Banda #10"},
+                        {"nombreM":"Banda #11"},
+                        {"nombreM":"Cortadora Multiple"},
+                        {"nombreM":"Cortadora Primaria"},
+                        {"nombreM":"Tapete Recibidor"},
+                        {"nombreM":"Verdes 067D"}
+                    ]
+                },
+                {
+                    "nombreL": "Linea 068",
+                    "maquinas":[
+                        {"nombreM":"Amasadora"},
+                        {"nombreM":"Banda #1"},
+                        {"nombreM":"Banda #2"},
+                        {"nombreM":"Banda #3"},
+                        {"nombreM":"Banda #5"},
+                        {"nombreM":"Banda #6"},
+                        {"nombreM":"Cajon Alimentador A"},
+                        {"nombreM":"Cortadora Multiple"},
+                        {"nombreM":"Cortadora Primaria"},
+                        {"nombreM":"Laminador"},
+                        {"nombreM":"Tapete 1"},
+                        {"nombreM":"Tapete 2"},
+                        {"nombreM":"Verdes 068"}
+                    ]
+                }
+            ]
+        },
+        {
+            "nombreA":"Horno",
+            "maquinas":[
+                {"nombreM":"Carbojet 1"},
+                {"nombreM":"Carbojet 2"},
+                {"nombreM":"Carbojet 3"},
+                {"nombreM":"Carbojet 4"},
+                {"nombreM":"Carbojet 5"},
+                {"nombreM":"Contra V 1"},
+                {"nombreM":"Gabinete Eléctrico"},
+                {"nombreM":"Piston Impulsor"},
+                {"nombreM":"Puerta Entrada 1"},
+                {"nombreM":"Puerta Entrada 2"},
+                {"nombreM":"Puerta Salida"},
+                {"nombreM":"Quemadores de Gas"},
+                {"nombreM":"Reductor Guaya Prehorno"},
+                {"nombreM":"Transbordador Entrada"},
+                {"nombreM":"Transbordador Salida"},
+                {"nombreM":"Vagonas"},
+                {"nombreM":"Ventilador Foso"},
+                {"nombreM":"Ventilador Tiro 1"},
+                {"nombreM":"Ventilador Tiro 2"}
+            ]
+        },
+        {
+            "nombreA":"Maquinaria Amarilla",
+            "maquinas":[
+                {"nombreM":"Bulldozer D65 EX"},
+                {"nombreM":"Cargador Caterpillar 420"},
+                {"nombreM":"Cargador Komatsu w70"},
+                {"nombreM":"Cargador SEM 1"},
+                {"nombreM":"Cargador SEM 2"},
+                {"nombreM":"Minicargador Rhino RS50"},
+                {"nombreM":"Montacargas Nissan"},
+                {"nombreM":"Montacargas Toyota"},
+                {"nombreM":"Tractor Nissan"}
+            ]
+        },
+        {
+            "nombreA":"Molienda",
+            "maquinas":[
+                {"nombreM":"Banda #1"},
+                {"nombreM":"Banda #2"},
+                {"nombreM":"Cajon Alimentador"},
+                {"nombreM":"Filtro de polvo"},
+                {"nombreM":"Gabinete Electrico"},
+                {"nombreM":"Molino"},
+                {"nombreM":"Zaranda"}
+            ]
+        },
+        {
             "nombreA":"Otro"
+        },
+        {
+            "nombreA":"Robot",
+            "maquinas":[
+                {"nombreM":"Arrastrador Hidrualico"},
+                {"nombreM":"Desvidor de cadenas"},
+                {"nombreM":"Mesas de cadenas 1"},
+                {"nombreM":"Mesas de cadenas 2"},
+                {"nombreM":"Robot (Brazo hidrualico)"}
+            ]
+        },
+        {
+            "nombreA":"Secadero",
+            "maquinas":[
+                {"nombreM":"Blower"},
+                {"nombreM":"Canal 1"},
+                {"nombreM":"Canal 2"},
+                {"nombreM":"Canal 3"},
+                {"nombreM":"Extractor 1"},
+                {"nombreM":"Extractor 2"},
+                {"nombreM":"Extractor 3"},
+                {"nombreM":"Gabinete Electrico"},
+                {"nombreM":"Puerta Entrada"},
+                {"nombreM":"Puerta Salida"},
+                {"nombreM":"Quemador"},
+                {"nombreM":"Transbordador Entrada"},
+                {"nombreM":"Transbordador Salida"},
+                {"nombreM":"Traslacion 1"},
+                {"nombreM":"Traslacion 2"},
+                {"nombreM":"Traslacion 3"}
+            ]
+        },
+        {
+            "nombreA":"Taller"
         }
     ]
 }
