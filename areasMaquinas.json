@@ -152,6 +152,14 @@
             "nombreA":"Otro"
         },
         {
+            "nombreA":"Planta Electrica",
+            "maquinas":[
+                {"nombreM":"Planta 1"},
+                {"nombreM":"Planta 2"},
+                {"nombreM":"Transferencia"}
+            ]
+        },
+        {
             "nombreA":"Robot",
             "maquinas":[
                 {"nombreM":"Arrastrador Hidrualico"},
