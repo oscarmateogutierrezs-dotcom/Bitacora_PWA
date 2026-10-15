@@ -149,9 +149,6 @@
             ]
         },
         {
-            "nombreA":"Otro"
-        },
-        {
             "nombreA":"Planta Electrica",
             "maquinas":[
                 {"nombreM":"Planta 1"},
@@ -176,6 +173,7 @@
                 {"nombreM":"Canal 1"},
                 {"nombreM":"Canal 2"},
                 {"nombreM":"Canal 3"},
+                {"nombreM":"Carretillas"},
                 {"nombreM":"Extractor 1"},
                 {"nombreM":"Extractor 2"},
                 {"nombreM":"Extractor 3"},
@@ -192,6 +190,9 @@
         },
         {
             "nombreA":"Taller"
+        },
+        {
+            "nombreA":"Otro"
         }
     ]
 }
