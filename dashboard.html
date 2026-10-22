@@ -73,15 +73,15 @@
             </div>
 
             <div class="input-group">
-                <label for="imagen">Fotografía o imagen (opcional):</label>
+                <label for="imagen">Fotografías o imágenes (opcional):</label>
                 <div class="image-actions">
-                    <input type="file" id="imagen" class="file-input" accept="image/*">
-                    <label for="imagen" class="file-picker">Seleccionar imagen</label>
+                    <input type="file" id="imagen" class="file-input" accept="image/*" multiple>
+                    <label for="imagen" class="file-picker">Seleccionar imágenes</label>
                     <input type="file" id="camara" class="file-input" accept="image/*" capture="environment">
                     <label for="camara" class="file-picker file-picker-camera">Abrir cámara</label>
                 </div>
-                <small id="imagenAyuda" class="file-help" hidden>Puede adjuntar una foto como evidencia del reporte.</small>
-                <img id="imagenVistaPrevia" class="image-preview" alt="Vista previa de la imagen seleccionada" hidden>
+                <small id="imagenAyuda" class="file-help">Puede adjuntar varias imágenes como evidencia del reporte.</small>
+                <div id="imagenVistaPrevia" class="image-previews" hidden></div>
             </div>
 
             <!-- Duración del Mantenimiento -->

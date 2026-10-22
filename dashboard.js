@@ -76,10 +76,9 @@ window.addEventListener('DOMContentLoaded', () => {
     const submitButton = form.querySelector('button[type="submit"]');
     let isSubmitting = false;
     let activeSubmissionId = null;
-    let selectedImageFile = null;
-    let selectedImageCompression = null;
-    let previewImageUrl = null;
-        let submitErrorTimeout = null;
+    const selectedImages = [];
+    let imageCompressionQueue = Promise.resolve();
+    let submitErrorTimeout = null;
     const inFlightSubmissionIds = new Set();
 
     function createSubmissionId() {
@@ -95,6 +94,9 @@ window.addEventListener('DOMContentLoaded', () => {
         submitButton.disabled = false;
         submitButton.textContent = 'Guardar Reporte';
         submitButton.classList.remove('is-saving');
+        imagenInput.disabled = false;
+        camaraInput.disabled = false;
+        renderImagePreviews();
     }
 
     // Helper: Show error notification
@@ -201,31 +203,80 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleImageSelection(event) {
-        const file = event.currentTarget.files[0];
-        if (!file) {
+        const files = Array.from(event.currentTarget.files || []);
+        event.currentTarget.value = '';
+        if (files.length === 0) {
             return;
         }
 
-        selectedImageFile = file;
-        (event.currentTarget === imagenInput ? camaraInput : imagenInput).value = '';
-        if (previewImageUrl) {
-            URL.revokeObjectURL(previewImageUrl);
+        const validFiles = files.filter(file => file.type.startsWith('image/'));
+        if (validFiles.length !== files.length) {
+            showError('Solo se pueden adjuntar archivos de imagen.');
         }
-        previewImageUrl = URL.createObjectURL(file);
-        imagenVistaPrevia.src = previewImageUrl;
-        imagenVistaPrevia.hidden = false;
-        imagenAyuda.textContent = 'La imagen se prepara mientras completas el reporte.';
-        selectedImageCompression = loadImage(file)
-            .then(image => Promise.all([
-                compressImage(image),
-                compressImage(image, {
-                    maxDataLength: 30000,
-                    maxDimension: 320,
-                    minDimension: 80,
-                    qualities: [0.45, 0.3, 0.2]
-                })
-            ]))
-            .then(([reportImage, historyImage]) => ({ reportImage, historyImage }), error => ({ error }));
+
+        validFiles.forEach(file => {
+            const selectedImage = {
+                previewUrl: URL.createObjectURL(file),
+                compression: null
+            };
+            selectedImage.compression = imageCompressionQueue
+                .then(() => loadImage(file))
+                .then(image => Promise.all([
+                    compressImage(image),
+                    compressImage(image, {
+                        maxDataLength: 30000,
+                        maxDimension: 320,
+                        minDimension: 80,
+                        qualities: [0.45, 0.3, 0.2]
+                    })
+                ]))
+                .then(([reportImage, historyImage]) => ({ reportImage, historyImage }), error => ({ error }));
+            imageCompressionQueue = selectedImage.compression.then(() => undefined, () => undefined);
+            selectedImages.push(selectedImage);
+        });
+
+        renderImagePreviews();
+    }
+
+    function renderImagePreviews() {
+        const fragment = document.createDocumentFragment();
+        selectedImages.forEach((selectedImage, index) => {
+            const item = document.createElement('div');
+            item.className = 'image-preview-item';
+
+            const image = document.createElement('img');
+            image.src = selectedImage.previewUrl;
+            image.alt = `Vista previa de la imagen ${index + 1}`;
+            image.className = 'image-preview';
+
+            const removeButton = document.createElement('button');
+            removeButton.type = 'button';
+            removeButton.className = 'image-remove';
+            removeButton.textContent = '×';
+            removeButton.setAttribute('aria-label', `Quitar imagen ${index + 1}`);
+            removeButton.title = `Quitar imagen ${index + 1}`;
+            removeButton.disabled = isSubmitting;
+            removeButton.addEventListener('click', () => {
+                URL.revokeObjectURL(selectedImage.previewUrl);
+                selectedImages.splice(selectedImages.indexOf(selectedImage), 1);
+                renderImagePreviews();
+            });
+
+            item.append(image, removeButton);
+            fragment.append(item);
+        });
+
+        imagenVistaPrevia.replaceChildren(fragment);
+        imagenVistaPrevia.hidden = selectedImages.length === 0;
+        imagenAyuda.textContent = selectedImages.length
+            ? `${selectedImages.length} ${selectedImages.length === 1 ? 'imagen seleccionada' : 'imágenes seleccionadas'}. Puede agregar más antes de guardar.`
+            : 'Puede adjuntar varias imágenes como evidencia del reporte.';
+    }
+
+    function clearSelectedImages() {
+        selectedImages.forEach(selectedImage => URL.revokeObjectURL(selectedImage.previewUrl));
+        selectedImages.length = 0;
+        renderImagePreviews();
     }
 
     imagenInput.addEventListener('change', handleImageSelection);
@@ -367,22 +418,32 @@ window.addEventListener('DOMContentLoaded', () => {
                     report.append(retryButton, document.createElement('br'));
                 }
             }
-            if (entry.imagen) {
+            const reportImages = Array.isArray(entry.imagenes)
+                ? entry.imagenes
+                : (entry.imagen ? [entry.imagen] : []);
+            reportImages.forEach((imageUrl, index) => {
                 const image = document.createElement('img');
-                image.src = entry.imagen;
-                image.alt = 'Imagen adjunta al reporte';
+                image.src = imageUrl;
+                image.alt = `Imagen ${index + 1} adjunta al reporte`;
                 image.className = 'image-preview';
                 image.loading = 'lazy';
                 image.decoding = 'async';
                 report.append(image);
-            }
+            });
             fragment.append(report);
         });
         container.replaceChildren(fragment);
     }
 
     async function sendEntryToGoogleSheets(entry) {
-        const payload = JSON.stringify(entry);
+        const images = Array.isArray(entry.imagenes)
+            ? entry.imagenes
+            : (entry.imagen ? [entry.imagen] : []);
+        const payload = JSON.stringify({
+            ...entry,
+            imagenes: images,
+            imagen: images[0] || ''
+        });
 
         const request = fetch(GOOGLE_SHEETS_WEB_APP_URL, {
             method: 'POST',
@@ -630,20 +691,21 @@ window.addEventListener('DOMContentLoaded', () => {
         submitButton.disabled = true;
         submitButton.textContent = 'Guardando...';
         submitButton.classList.add('is-saving');
+        imagenInput.disabled = true;
+        camaraInput.disabled = true;
+        renderImagePreviews();
 
-        let imagen = '';
-        let imagenHistorial = '';
-        if (selectedImageFile) {
-            const compressionResult = await selectedImageCompression;
-            if (compressionResult.error) {
-                showError(compressionResult.error.message);
-                resetSubmitButton();
-                return;
-            }
-
-            imagen = compressionResult.reportImage;
-            imagenHistorial = compressionResult.historyImage;
+        const imageCompressionResults = await Promise.all(
+            selectedImages.map(selectedImage => selectedImage.compression)
+        );
+        const failedImage = imageCompressionResults.find(result => result.error);
+        if (failedImage) {
+            showError(failedImage.error.message);
+            resetSubmitButton();
+            return;
         }
+        const reportImages = imageCompressionResults.map(result => result.reportImage);
+        const historyImages = imageCompressionResults.map(result => result.historyImage);
 
         activeSubmissionId = activeSubmissionId || createSubmissionId();
         const newEntry = {
@@ -654,14 +716,14 @@ window.addEventListener('DOMContentLoaded', () => {
             duracion,
             duracionHoras,
             duracionMinutos,
-            imagen,
+            imagenes: reportImages,
             fecha,
             hora,
             usuario: user,
             cargo
         };
 
-        const localEntry = { ...newEntry, imagen: imagenHistorial, sendStatus: 'sending' };
+        const localEntry = { ...newEntry, imagenes: historyImages, sendStatus: 'sending' };
         const savedEntries = saveEntry(localEntry);
         if (!savedEntries) {
             showError('No se pudo guardar una copia local del reporte; no se inició el envío. Libera espacio e inténtalo de nuevo.');
@@ -670,15 +732,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
 
         form.reset();
-        selectedImageFile = null;
-        selectedImageCompression = null;
-        if (previewImageUrl) {
-            URL.revokeObjectURL(previewImageUrl);
-            previewImageUrl = null;
-        }
-        imagenVistaPrevia.hidden = true;
-        imagenVistaPrevia.removeAttribute('src');
-        imagenAyuda.textContent = 'Puede adjuntar una foto como evidencia del reporte.';
+        clearSelectedImages();
         lubricacionCheck.dispatchEvent(new Event('change'));
         areaSelect.dispatchEvent(new Event('change'));
         activeSubmissionId = null;

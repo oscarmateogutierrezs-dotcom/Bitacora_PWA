@@ -398,8 +398,51 @@ button[type="submit"]:active {
     background-color: #f8fafc;
 }
 
-.image-preview[hidden] {
+.image-previews[hidden] {
     display: none;
+}
+
+.image-previews {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.image-preview-item {
+    position: relative;
+    min-width: 0;
+}
+
+.image-preview-item .image-preview {
+    height: 140px;
+    margin-top: 0;
+}
+
+.image-remove {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 27px;
+    height: 27px;
+    margin: 0;
+    padding: 0;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    background-color: #dc2626;
+    color: #ffffff;
+    font-size: 24px;
+    line-height: 1;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+    z-index: 1;
+}
+
+.image-remove:hover,
+.image-remove:focus-visible {
+    background-color: #b91c1c;
 }
 
 .file-picker-camera:hover {

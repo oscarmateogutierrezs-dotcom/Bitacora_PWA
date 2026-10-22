@@ -27,7 +27,8 @@
         {
             "nombreA":"Desencañe",
             "maquinas":[
-                {"nombreM":"Reductor Guaya Desencañe"}
+                {"nombreM":"Reductor Guaya Desencañe"},
+                {"nombreM":"Ventilador"}
             ]
         },
         {
@@ -133,7 +134,8 @@
                 {"nombreM":"Minicargador Rhino RS50"},
                 {"nombreM":"Montacargas Nissan"},
                 {"nombreM":"Montacargas Toyota"},
-                {"nombreM":"Tractor Nissan"}
+                {"nombreM":"Tractor Nissan "},
+                {"nombreM":"Tractor Ford"}
             ]
         },
         {
