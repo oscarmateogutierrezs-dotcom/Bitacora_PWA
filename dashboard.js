@@ -506,34 +506,123 @@ window.addEventListener('DOMContentLoaded', () => {
         updateHistorialDisplay(historialContainer, savedEntries);
     }
 
-    function sendEntryInBackground(serverEntry, localEntry) {
-        inFlightSubmissionIds.add(serverEntry.submissionId);
-        sendEntryToGoogleSheets(serverEntry)
-            .then(async result => {
-                if (!result.transportComplete) {
-                    throw new Error('No se pudo completar el envío.');
-                }
+    const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-                let sendStatus = result.confirmed ? 'confirmed' : 'unknown';
-                if (!result.confirmed) {
-                    try {
-                        const status = await requestSubmissionStatus(serverEntry.submissionId);
-                        sendStatus = status.success
-                            ? (status.processed ? 'confirmed' : 'failed')
-                            : 'unknown';
-                    } catch {
-                        sendStatus = 'unknown';
-                    }
+    // Devuelve 'confirmed', 'failed' (el servidor respondió que no lo tiene) o 'unknown' (sin respuesta).
+    async function verifySubmission(submissionId, attempts = 5) {
+        let lastResult = 'unknown';
+        for (let attempt = 0; attempt < attempts; attempt++) {
+            if (attempt > 0) {
+                await wait(2000 * attempt);
+            }
+
+            try {
+                const status = await requestSubmissionStatus(submissionId, 20000);
+                if (status.success && status.processed) {
+                    return 'confirmed';
                 }
-                updateEntrySendStatus(localEntry, sendStatus);
-            })
-            .catch(() => {
-                updateEntrySendStatus(localEntry, 'failed');
-            })
-            .finally(() => {
-                inFlightSubmissionIds.delete(serverEntry.submissionId);
-                updateHistorialDisplay(historialContainer, getEntries());
-            });
+                lastResult = status.success ? 'failed' : 'unknown';
+            } catch {
+                lastResult = 'unknown';
+            }
+        }
+
+        return lastResult;
+    }
+
+    async function sendWithRetries(serverEntry, attempts = 4) {
+        for (let attempt = 0; attempt < attempts; attempt++) {
+            try {
+                const result = await sendEntryToGoogleSheets(serverEntry);
+                if (result.transportComplete) {
+                    return result;
+                }
+            } catch {
+                // El servidor pudo recibirlo aunque la respuesta no llegara; se verifica abajo.
+            }
+
+            if (attempt < attempts - 1) {
+                const alreadySaved = await verifySubmission(serverEntry.submissionId, 1);
+                if (alreadySaved === 'confirmed') {
+                    return { confirmed: true, transportComplete: true };
+                }
+                await wait(2000 * (attempt + 1));
+            }
+        }
+
+        return null;
+    }
+
+    async function sendEntryInBackground(serverEntry, localEntry) {
+        inFlightSubmissionIds.add(serverEntry.submissionId);
+        try {
+            const result = await sendWithRetries(serverEntry);
+            let sendStatus;
+            if (result?.confirmed) {
+                sendStatus = 'confirmed';
+            } else {
+                const verified = await verifySubmission(serverEntry.submissionId);
+                sendStatus = result || verified === 'confirmed' ? verified : 'failed';
+            }
+            updateEntrySendStatus(localEntry, sendStatus);
+        } catch {
+            updateEntrySendStatus(localEntry, 'failed');
+        } finally {
+            inFlightSubmissionIds.delete(serverEntry.submissionId);
+            updateHistorialDisplay(historialContainer, getEntries());
+        }
+    }
+
+    let isVerifyingPending = false;
+
+    async function verifyPendingEntries() {
+        if (isVerifyingPending || isOffline()) {
+            return;
+        }
+
+        isVerifyingPending = true;
+        try {
+            await checkPendingEntries();
+        } finally {
+            isVerifyingPending = false;
+        }
+    }
+
+    const autoResendCounts = new Map();
+
+    async function checkPendingEntries() {
+        const pending = getEntries().filter(entry =>
+            entry.submissionId &&
+            entry.sendStatus &&
+            entry.sendStatus !== 'confirmed' &&
+            !inFlightSubmissionIds.has(entry.submissionId)
+        );
+
+        for (const entry of pending) {
+            let verified;
+            inFlightSubmissionIds.add(entry.submissionId);
+            try {
+                verified = await verifySubmission(entry.submissionId, 2);
+                if (verified === 'confirmed') {
+                    updateEntrySendStatus(entry, 'confirmed');
+                } else if (entry.sendStatus === 'sending') {
+                    updateEntrySendStatus(entry, 'unknown');
+                }
+            } finally {
+                inFlightSubmissionIds.delete(entry.submissionId);
+            }
+
+            // El servidor confirmó que no lo recibió: se reenvía solo si no hay imágenes de menor calidad que perder.
+            const hasImages = (entry.imagenes && entry.imagenes.length) || entry.imagen;
+            const resendCount = autoResendCounts.get(entry.submissionId) || 0;
+            if (verified === 'failed' && !hasImages && resendCount < 3) {
+                autoResendCounts.set(entry.submissionId, resendCount + 1);
+                const { sendStatus, ...serverEntry } = entry;
+                sendEntryInBackground(serverEntry, { ...entry, sendStatus: 'sending' });
+            }
+        }
+
+        updateHistorialDisplay(historialContainer, getEntries());
     }
 
     function retrySubmission(entry, button) {
@@ -561,6 +650,16 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     updateHistorialDisplay(historialContainer, getEntries());
+    verifyPendingEntries();
+    // Apps Script puede tardar en registrar reportes con imagen; se vuelve a consultar sin reenviar.
+    const pendingCheckInterval = setInterval(verifyPendingEntries, 10000);
+    setTimeout(() => clearInterval(pendingCheckInterval), 15 * 60 * 1000);
+    window.addEventListener('online', verifyPendingEntries);
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            verifyPendingEntries();
+        }
+    });
 
     // Log Out button logic
     document.getElementById('logoutBtn').addEventListener('click', () => {
