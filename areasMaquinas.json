@@ -142,6 +142,7 @@
         {
             "nombreA":"Molienda",
             "maquinas":[
+                {"nombreM":"Amasadora"},
                 {"nombreM":"Banda #1"},
                 {"nombreM":"Banda #2"},
                 {"nombreM":"Cajon Alimentador"},
