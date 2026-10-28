@@ -70,6 +70,7 @@
                 {
                     "nombreL": "Linea 067D",
                     "maquinas":[
+                        {"nombreM":"Amasadora"},
                         {"nombreM":"Banda #9"},
                         {"nombreM":"Banda #10"},
                         {"nombreM":"Banda #11"},
