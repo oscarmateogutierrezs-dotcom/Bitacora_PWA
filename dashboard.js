@@ -32,27 +32,6 @@ if (!token) {
     }
 }
 
-// Evita que "atrás" cierre la app o regrese a login (app pinning)
-// Chrome ignora entradas añadidas sin gesto del usuario, por eso se agregan en cada toque
-let guardEntries = 0;
-function addGuardEntry() {
-    if (guardEntries < 5) {
-        history.pushState({ guard: true }, '', location.href);
-        guardEntries++;
-    }
-}
-['pointerup', 'touchend', 'click', 'keydown'].forEach((evt) =>
-    window.addEventListener(evt, addGuardEntry, { passive: true })
-);
-addGuardEntry();
-window.addEventListener('popstate', () => {
-    guardEntries = Math.max(0, guardEntries - 1);
-    if (guardEntries === 0) {
-        history.pushState({ guard: true }, '', location.href);
-        guardEntries = 1;
-    }
-});
-
 window.addEventListener('DOMContentLoaded', () => {
     if (!SESSION_APIS_SUPPORTED) {
         document.querySelector('.container').hidden = true;
