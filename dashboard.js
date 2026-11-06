@@ -41,9 +41,10 @@ function addGuardEntry() {
         guardEntries++;
     }
 }
-['pointerdown', 'touchstart', 'click', 'keydown'].forEach((evt) =>
+['pointerup', 'touchend', 'click', 'keydown'].forEach((evt) =>
     window.addEventListener(evt, addGuardEntry, { passive: true })
 );
+addGuardEntry();
 window.addEventListener('popstate', () => {
     guardEntries = Math.max(0, guardEntries - 1);
     if (guardEntries === 0) {
