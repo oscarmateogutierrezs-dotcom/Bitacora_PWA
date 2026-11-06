@@ -25,7 +25,7 @@
             }
 
             function redirectToDashboard() {
-                window.location.href = 'dashboard.html';
+                window.location.replace('dashboard.html');
             }
             // CORREGIDO: Ahora verifica el Token real que generas abajo, no el viejo "isLoggedIn"
             const token = getSessionToken();
@@ -102,7 +102,7 @@
                     }
                     
                     // Redirect them to the app dashboard
-                    window.location.href = 'dashboard.html';    
+                    window.location.replace('dashboard.html');
                 });
                 function showError(title, message) {
                     errorTitle.innerText = title;

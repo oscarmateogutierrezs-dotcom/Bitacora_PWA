@@ -32,6 +32,12 @@ if (!token) {
     }
 }
 
+// Evita que "atrás" cierre la app o regrese a login (app pinning)
+history.pushState({ guard: true }, '', location.href);
+window.addEventListener('popstate', () => {
+    history.pushState({ guard: true }, '', location.href);
+});
+
 window.addEventListener('DOMContentLoaded', () => {
     if (!SESSION_APIS_SUPPORTED) {
         document.querySelector('.container').hidden = true;
