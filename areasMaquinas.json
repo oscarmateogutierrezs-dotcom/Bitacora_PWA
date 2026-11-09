@@ -10,7 +10,8 @@
                 {"nombreM":"Cadenas Acumuladoras"},
                 {"nombreM":"Mesa Agrupadora"},
                 {"nombreM":"Pala"},
-                {"nombreM":"Tapete Pulmon"}
+                {"nombreM":"Tapete Pulmon"},
+                {"nombreM":"Otro (especifique maquina)"}
             ]
         },
         {
@@ -22,14 +23,16 @@
                 {"nombreM":"Pala"},
                 {"nombreM":"Rodillos Acumuladores"},
                 {"nombreM":"Rodillos Elevadores"},
-                {"nombreM":"Tapete Pulmon"}
+                {"nombreM":"Tapete Pulmon"},
+                {"nombreM":"Otro (especifique maquina)"}
             ]
         },
         {
             "nombreA":"Desencañe",
             "maquinas":[
                 {"nombreM":"Reductor Guaya Desencañe"},
-                {"nombreM":"Ventilador"}
+                {"nombreM":"Ventilador"},
+                {"nombreM":"Otro (especifique maquina)"}
             ]
         },
         {
@@ -51,7 +54,8 @@
                 {"nombreM":"Piston Encañe"},
                 {"nombreM":"Rana"},
                 {"nombreM":"Reductor de Encañe"},
-                {"nombreM":"Rodillos Desviadores"}
+                {"nombreM":"Rodillos Desviadores"},
+                {"nombreM":"Otro (especifique maquina)"}
             ]
         },
         {
@@ -65,7 +69,8 @@
                         {"nombreM":"Cajon Alimentador"},
                         {"nombreM":"Cortadora Multiple"},
                         {"nombreM":"Cortadora Primaria"},
-                        {"nombreM":"Verdes 067"}
+                        {"nombreM":"Verdes 067"},
+                        {"nombreM":"Otro (especifique maquina)"}
                     ]
                 },
                 {
@@ -78,7 +83,8 @@
                         {"nombreM":"Cortadora Multiple"},
                         {"nombreM":"Cortadora Primaria"},
                         {"nombreM":"Tapete Recibidor"},
-                        {"nombreM":"Verdes 067D"}
+                        {"nombreM":"Verdes 067D"},
+                        {"nombreM":"Otro (especifique maquina)"}
                     ]
                 },
                 {
@@ -96,7 +102,8 @@
                         {"nombreM":"Laminador"},
                         {"nombreM":"Tapete 1"},
                         {"nombreM":"Tapete 2"},
-                        {"nombreM":"Verdes 068"}
+                        {"nombreM":"Verdes 068"},
+                        {"nombreM":"Otro (especifique maquina)"}
                     ]
                 }
             ]
@@ -122,7 +129,8 @@
                 {"nombreM":"Vagonas"},
                 {"nombreM":"Ventilador Foso"},
                 {"nombreM":"Ventilador Tiro 1"},
-                {"nombreM":"Ventilador Tiro 2"}
+                {"nombreM":"Ventilador Tiro 2"},
+                {"nombreM":"Otro (especifique maquina)"}
             ]
         },
         {
@@ -137,7 +145,8 @@
                 {"nombreM":"Montacargas Nissan"},
                 {"nombreM":"Montacargas Toyota"},
                 {"nombreM":"Tractor Nissan "},
-                {"nombreM":"Tractor Ford"}
+                {"nombreM":"Tractor Ford"},
+                {"nombreM":"Otro (especifique maquina)"}
             ]
         },
         {
@@ -151,7 +160,8 @@
                 {"nombreM":"Filtro de polvo"},
                 {"nombreM":"Gabinete Electrico"},
                 {"nombreM":"Molino"},
-                {"nombreM":"Zaranda"}
+                {"nombreM":"Zaranda"},
+                {"nombreM":"Otro (especifique maquina)"}
             ]
         },
         {
@@ -159,7 +169,8 @@
             "maquinas":[
                 {"nombreM":"Planta 1"},
                 {"nombreM":"Planta 2"},
-                {"nombreM":"Transferencia"}
+                {"nombreM":"Transferencia"},
+                {"nombreM":"Otro (especifique maquina)"}
             ]
         },
         {
@@ -169,7 +180,8 @@
                 {"nombreM":"Desvidor de cadenas"},
                 {"nombreM":"Mesas de cadenas 1"},
                 {"nombreM":"Mesas de cadenas 2"},
-                {"nombreM":"Robot (Brazo hidrualico)"}
+                {"nombreM":"Robot (Brazo hidrualico)"},
+                {"nombreM":"Otro (especifique maquina)"}
             ]
         },
         {
@@ -191,7 +203,8 @@
                 {"nombreM":"Transbordador Salida"},
                 {"nombreM":"Traslacion 1"},
                 {"nombreM":"Traslacion 2"},
-                {"nombreM":"Traslacion 3"}
+                {"nombreM":"Traslacion 3"},
+                {"nombreM":"Otro (especifique maquina)"}
             ]
         },
         {
