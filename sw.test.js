@@ -189,6 +189,52 @@ test('history page and script are precached', async () => {
   assert.ok(historyScript);
 });
 
+test('history entries load when there is no active session', async () => {
+  const historyCode = fs.readFileSync('historial.js', 'utf8');
+  const listeners = {};
+  const redirects = [];
+  let requestedUrl;
+  const historyList = { replaceChildren: () => {} };
+  const status = { classList: { toggle: () => {} } };
+  const logoutButton = { hidden: false, addEventListener: () => {} };
+  const context = {
+    navigator: {},
+    SESSION_APIS_SUPPORTED: true,
+    URL,
+    setTimeout,
+    clearTimeout,
+    getSessionToken: () => null,
+    isOffline: () => false,
+    document: {
+      getElementById: (id) => ({
+        'history-list': historyList,
+        'history-status': status,
+        logoutBtn: logoutButton
+      })[id],
+      createElement: () => ({ remove: () => {} }),
+      head: {
+        append: (script) => {
+          requestedUrl = script.src;
+          script.onerror();
+        }
+      }
+    },
+    console: { error: () => {} },
+    window: {
+      addEventListener: (event, handler) => { listeners[event] = handler; },
+      location: { replace: (url) => redirects.push(url) }
+    }
+  };
+  vm.createContext(context);
+  vm.runInContext(historyCode, context);
+  listeners.DOMContentLoaded();
+  await new Promise((resolve) => setImmediate(resolve));
+
+  assert.equal(logoutButton.hidden, true);
+  assert.match(requestedUrl, /action=entries/);
+  assert.deepEqual(redirects, []);
+});
+
 test('page integrations bound status requests with a timeout', () => {
   const loginHtml = fs.readFileSync('login.html', 'utf8');
   const dashboardCode = fs.readFileSync('dashboard.js', 'utf8');

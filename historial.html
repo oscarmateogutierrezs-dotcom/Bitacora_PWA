@@ -18,13 +18,12 @@
         <p id="service-worker-error" role="status" aria-live="polite" hidden>No se pudo activar el modo sin conexión.</p>
         <main class="container history-container">
             <div class="history-topbar">
-                <a class="history-back" href="login.html">Volver al inicio</a>
                 <button type="button" class="theme-toggle" data-theme-toggle>Modo oscuro</button>
+                <button type="history" class="history-back" onclick="window.location.href='login.html'">Volver al inicio</button>
             </div>
             <h2>Historial de novedades</h2>
             <p id="history-status" class="history-status" role="status" aria-live="polite">Cargando entradas...</p>
             <section id="history-list" aria-label="Entradas registradas"></section>
-            <button type="button" id="logoutBtn" class="history-logout">Cerrar sesión</button>
         </main>
     </body>
 </html>

@@ -1,18 +1,12 @@
 const token = getSessionToken();
 let hasValidSession = false;
 
-if (!token) {
-    window.location.replace('login.html');
-} else {
+if (token) {
     try {
         parseSessionToken(token);
         hasValidSession = true;
-        if (isOffline()) {
-            window.location.replace('login.html');
-        }
     } catch {
         clearSessionToken();
-        window.location.replace('login.html');
     }
 }
 
@@ -37,13 +31,14 @@ window.addEventListener('DOMContentLoaded', () => {
         status.classList.toggle('history-error', isError);
     }
 
-    if (!hasValidSession) {
-        return;
-    }
-
     if (!SESSION_APIS_SUPPORTED) {
         disableUnsupportedControls(document);
         return;
+    }
+
+    const logoutButton = document.getElementById('logoutBtn');
+    if (logoutButton) {
+        logoutButton.hidden = !hasValidSession;
     }
 
     if (isOffline()) {
@@ -53,12 +48,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const GOOGLE_SHEETS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyQY8718j74saEvYXbQ0DEMcxGX6s8It__NYVh5viXQZ8Qx_EWKrTvXXlH1lSsnFH211g/exec';
 
-    function appendField(container, label, value) {
+    function appendField(container, label, value, className) {
         if (!value) {
             return;
         }
 
         const field = document.createElement('p');
+        if (className) {
+            field.className = className;
+        }
         const name = document.createElement('strong');
         name.textContent = `${label}: `;
         field.append(name, document.createTextNode(value));
@@ -66,27 +64,47 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderEntries(entries) {
-        if (entries.length === 0) {
+        const normalizeHeader = value => String(value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .trim()
+            .toLowerCase();
+        const firstEntry = entries[0];
+        const hasHeader = firstEntry &&
+            /^area(?:\s+general)?$/.test(normalizeHeader(firstEntry.area)) &&
+            /^maquina(?:\s*\/\s*equipo)?$/.test(normalizeHeader(firstEntry.maquina)) &&
+            normalizeHeader(firstEntry.novedad) === 'novedad';
+        const dataEntries = hasHeader ? entries.slice(1) : entries;
+
+        if (dataEntries.length === 0) {
             historyList.replaceChildren();
             showHistoryMessage('No hay entradas registradas en la hoja.');
             return;
         }
 
         const fragment = document.createDocumentFragment();
-        entries.slice().reverse().forEach(entry => {
+        dataEntries.slice().reverse().forEach(entry => {
             const card = document.createElement('article');
             card.className = 'history-entry';
             const heading = document.createElement('h3');
+            heading.className = 'history-entry-area';
             heading.textContent = entry.area || 'Novedad sin área';
             card.append(heading);
-            appendField(card, 'Máquina', entry.maquina);
-            appendField(card, 'Novedad', entry.novedad);
-            appendField(card, 'Duración', entry.duracion);
-            appendField(card, 'Fecha', entry.fecha);
-            appendField(card, 'Hora', entry.hora);
-            appendField(card, 'Usuario', entry.usuario);
-            appendField(card, 'Cargo', entry.cargo);
+            appendField(card, 'Máquina', entry.maquina, 'history-entry-machine');
+            if (entry.novedad) {
+                const description = document.createElement('p');
+                description.className = 'history-entry-description';
+                description.textContent = entry.novedad;
+                card.append(description);
+            }
+            appendField(card, 'Duración', entry.duracion, 'history-entry-duration');
+            appendField(card, 'Hora', entry.hora, 'history-entry-time');
+            appendField(card, 'Usuario', entry.usuario, 'history-entry-user');
+            appendField(card, 'Cargo', entry.cargo, 'history-entry-role');
+            appendField(card, 'Fecha', entry.fecha, 'history-entry-date');
 
+            const imageLinks = document.createElement('div');
+            imageLinks.className = 'history-entry-images';
             (Array.isArray(entry.imagenes) ? entry.imagenes : []).forEach((url, index) => {
                 let imageUrl;
                 try {
@@ -105,14 +123,17 @@ window.addEventListener('DOMContentLoaded', () => {
                 link.rel = 'noopener noreferrer';
                 link.textContent = `Ver imagen ${index + 1}`;
                 link.className = 'history-image-link';
-                card.append(link);
+                imageLinks.append(link);
             });
 
+            if (imageLinks.hasChildNodes()) {
+                card.append(imageLinks);
+            }
             fragment.append(card);
         });
 
         historyList.replaceChildren(fragment);
-        showHistoryMessage(`${entries.length} ${entries.length === 1 ? 'entrada cargada' : 'entradas cargadas'}.`);
+        showHistoryMessage(`${dataEntries.length} ${dataEntries.length === 1 ? 'entrada cargada' : 'entradas cargadas'}.`);
     }
 
     function requestEntries(timeoutMs = 20000) {
@@ -140,6 +161,12 @@ window.addEventListener('DOMContentLoaded', () => {
                 cleanup();
                 reject(new Error('No se pudo conectar con la hoja de cálculo.'));
             };
+            script.onload = () => {
+                if (window[callbackName]) {
+                    cleanup();
+                    reject(new Error('La Web App de Apps Script no devolvió el historial. Verifique que esté desplegada la versión actual.'));
+                }
+            };
             endpoint.searchParams.set('action', 'entries');
             endpoint.searchParams.set('callback', callbackName);
             endpoint.searchParams.set('_', Date.now().toString());
@@ -152,14 +179,16 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-        if (!clearSessionToken()) {
-            window.alert('No se pudo cerrar la sesión en este navegador.');
-            return;
-        }
-        deleteAllEntries();
-        window.location.replace('login.html');
-    });
+    if (hasValidSession && logoutButton) {
+        logoutButton.addEventListener('click', () => {
+            if (!clearSessionToken()) {
+                window.alert('No se pudo cerrar la sesión en este navegador.');
+                return;
+            }
+            deleteAllEntries();
+            window.location.replace('login.html');
+        });
+    }
 
     requestEntries()
         .then(renderEntries)

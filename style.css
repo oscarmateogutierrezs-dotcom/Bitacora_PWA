@@ -80,6 +80,16 @@ body {
 }
 
 .history-entry {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+        "area machine"
+        "description description"
+        "duration time"
+        "user role"
+        "date date"
+        "images images";
+    gap: 12px 16px;
     margin: 12px 0;
     padding: 16px;
     border: 1px solid #e2e8f0;
@@ -88,12 +98,54 @@ body {
 }
 
 .history-entry h3 {
-    margin: 0 0 12px;
+    margin: 0;
     color: #0f172a;
 }
 
 .history-entry p {
-    margin: 8px 0;
+    margin: 0;
+}
+
+.history-entry > * {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.history-entry-area { grid-area: area; }
+.history-entry-machine { grid-area: machine; }
+.history-entry-duration { grid-area: duration; }
+.history-entry-time { grid-area: time; }
+.history-entry-user { grid-area: user; }
+.history-entry-role { grid-area: role; }
+.history-entry-date { grid-area: date; }
+.history-entry-images { grid-area: images; }
+
+.history-entry-description {
+    grid-area: description;
+    min-height: 120px;
+    box-sizing: border-box;
+    padding: 16px;
+    border: 1px solid #94a3b8;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: center;
+    justify-content: center;
+    text-align: center;
+    white-space: pre-wrap;
+}
+
+html[data-theme="dark"] .history-entry {
+    border-color: #4b5563;
+    background-color: #111827;
+    color: #e5e7eb;
+}
+
+html[data-theme="dark"] .history-entry-description {
+    border-color: #6b7280;
+}
+
+html[data-theme="dark"] .history-image-link {
+    color: #7dd3fc;
 }
 
 .history-image-link {
@@ -313,6 +365,7 @@ button:active {
 }
 
 button[type="history"] {
+    width: 350px;
     background-color: #0284c7;
     color: #ffffff;
 }
