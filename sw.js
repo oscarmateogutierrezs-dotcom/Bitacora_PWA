@@ -1,9 +1,11 @@
-const CACHE_NAME = 'enterprise-v18';
+const CACHE_NAME = 'enterprise-v19';
 const META_CACHE_NAME = `${CACHE_NAME}-meta`;
 const ASSETS = [
   'login.html',
   'dashboard.html',
   'dashboard.js',
+  'historial.html',
+  'historial.js',
   'offline.html',
   'session.js',
   'backguard.js',

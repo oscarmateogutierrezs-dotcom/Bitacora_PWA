@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Historial</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="style.css">
+        <link rel="manifest" href="manifest.json">
+        <meta name="theme-color" content="#0f172a">
+        <script src="session.js"></script>
+        <script src="backguard.js"></script>
+        <script src="historial.js" defer></script>
+    </head>
+    <body>
+        <p id="compatibility-error" role="alert" aria-live="assertive" hidden>Este navegador no es compatible con esta aplicación.</p>
+        <p id="service-worker-error" role="status" aria-live="polite" hidden>No se pudo activar el modo sin conexión.</p>
+        <main class="container history-container">
+            <div class="history-topbar">
+                <a class="history-back" href="login.html">Volver al inicio</a>
+                <button type="button" class="theme-toggle" data-theme-toggle>Modo oscuro</button>
+            </div>
+            <h2>Historial de novedades</h2>
+            <p id="history-status" class="history-status" role="status" aria-live="polite">Cargando entradas...</p>
+            <section id="history-list" aria-label="Entradas registradas"></section>
+            <button type="button" id="logoutBtn" class="history-logout">Cerrar sesión</button>
+        </main>
+    </body>
+</html>

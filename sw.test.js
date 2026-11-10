@@ -177,6 +177,18 @@ test('offline query-string requests use the canonical cache key', async () => {
   await refreshPromise;
 });
 
+test('history page and script are precached', async () => {
+  const { context, handlers } = createWorker();
+  let installPromise;
+  handlers.install({ waitUntil: (promise) => { installPromise = promise; } });
+  await installPromise;
+
+  const historyPage = await context.caches.match(new Request('https://example.test/app/historial.html'));
+  const historyScript = await context.caches.match(new Request('https://example.test/app/historial.js'));
+  assert.ok(historyPage);
+  assert.ok(historyScript);
+});
+
 test('page integrations bound status requests with a timeout', () => {
   const loginHtml = fs.readFileSync('login.html', 'utf8');
   const dashboardCode = fs.readFileSync('dashboard.js', 'utf8');

@@ -53,6 +53,63 @@ body {
     border-radius: 8px;
 }
 
+.history-container {
+    max-width: 720px;
+}
+
+.history-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.history-back,
+.history-navigation a {
+    color: #0369a1;
+    font-weight: 600;
+}
+
+.history-status {
+    color: #64748b;
+}
+
+.history-error {
+    color: #b91c1c;
+}
+
+.history-entry {
+    margin: 12px 0;
+    padding: 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.history-entry h3 {
+    margin: 0 0 12px;
+    color: #0f172a;
+}
+
+.history-entry p {
+    margin: 8px 0;
+}
+
+.history-image-link {
+    display: inline-block;
+    margin: 8px 12px 0 0;
+}
+
+.history-logout {
+    margin-top: 24px;
+    background-color: #dc2626;
+}
+
+.history-navigation {
+    margin: 0 0 20px;
+}
+
 /* Corporate branding header */
 h2 {
     display: block;        /* Forces it to behave as a normal block */
@@ -255,6 +312,18 @@ button:active {
     background-color: #0f172a;
 }
 
+button[type="history"] {
+    background-color: #0284c7;
+    color: #ffffff;
+}
+
+button[type="history"]:hover {
+    background-color: #0369a1;
+}
+
+button[type="history"]:active {
+    background-color: #0f172a;
+}
 
 button[type="submit"]:active {
     background-color: #ffffff !important;
