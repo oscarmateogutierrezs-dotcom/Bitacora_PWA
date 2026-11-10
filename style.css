@@ -365,7 +365,7 @@ button:active {
 }
 
 button[type="history"] {
-    width: 350px;
+    width: 100%;
     background-color: #0284c7;
     color: #ffffff;
 }
