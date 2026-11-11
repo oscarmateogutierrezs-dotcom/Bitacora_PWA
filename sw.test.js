@@ -112,6 +112,14 @@ test('required precache failures reject installation and preserve the active cac
   assert.equal(await (await activeCache.match(previousDashboard)).text(), 'previous dashboard');
 });
 
+test('the Capacitor person template is a required cached asset', async () => {
+  const { handlers, workerState } = createWorker(['personas.js']);
+  let installPromise;
+  handlers.install({ waitUntil: (promise) => { installPromise = promise; } });
+  await assert.rejects(installPromise, /personas\.js/);
+  assert.equal(workerState.skipWaitingCalls, 0);
+});
+
 test('optional icon failures do not mark precache unhealthy', async () => {
   const { handlers } = createWorker(['icons/icon-192.png']);
   let installPromise;

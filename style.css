@@ -364,17 +364,20 @@ button:active {
     background-color: #0f172a;
 }
 
-button[type="history"] {
+button[type="history"],
+button.history-button {
     width: 100%;
     background-color: #0284c7;
     color: #ffffff;
 }
 
-button[type="history"]:hover {
+button[type="history"]:hover,
+button.history-button:hover {
     background-color: #0369a1;
 }
 
-button[type="history"]:active {
+button[type="history"]:active,
+button.history-button:active {
     background-color: #0f172a;
 }
 

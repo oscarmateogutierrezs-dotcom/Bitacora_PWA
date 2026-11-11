@@ -133,7 +133,7 @@ window.addEventListener('DOMContentLoaded', () => {
         });
 
         historyList.replaceChildren(fragment);
-        showHistoryMessage(`${dataEntries.length} ${dataEntries.length === 1 ? 'entrada cargada' : 'entradas cargadas'}.`);
+        showHistoryMessage(`${dataEntries.length} ${dataEntries.length === 1 ? 'entrada cargada (del mes)' : 'entradas cargadas (del mes)'}.`);
     }
 
     function requestEntries(timeoutMs = 20000) {

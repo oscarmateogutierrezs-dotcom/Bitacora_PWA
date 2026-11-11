@@ -12,6 +12,7 @@
         <meta name="theme-color" content="#0f172a">
         <script src="session.js"></script>
         <script src="backguard.js"></script>
+        <script src="personas.js"></script>
         <script>
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('./sw.js')
@@ -47,6 +48,19 @@
                 const errorAlert = document.getElementById('error-alert');
                 const errorTitle = document.getElementById('error-title');
                 const errorDesc = document.getElementById('error-desc');
+                const nombre = document.getElementById('nombre');
+                const cargo = document.getElementById('cargo');
+                const persona = document.getElementById('persona');
+                const isNativeApp = typeof window.Capacitor?.isNativePlatform === 'function' &&
+                    window.Capacitor.isNativePlatform();
+
+                if (isNativeApp) {
+                    document.getElementById('nombre-group').hidden = true;
+                    document.getElementById('cargo-group').hidden = true;
+                    document.getElementById('login-submit').hidden = true;
+                    document.getElementById('persona-group').hidden = false;
+                    document.getElementById('login-subtitle').textContent = 'Seleccione su nombre para acceder';
+                }
 
                 if (!SESSION_APIS_SUPPORTED) {
                     disableUnsupportedControls(document);
@@ -56,15 +70,63 @@
                 if (isOffline()) {
                     showError("Sin conexión", "No hay conexión a internet. Cierre la aplicación, conéctese a la red e inténtelo nuevamente.");
                     disableUnsupportedControls(document);
+                    if (isNativeApp) {
+                        persona.disabled = true;
+                    }
                     return;
                 }
-                
+
                 form.addEventListener('submit', (event) => {
-                    event.preventDefault(); 
+                    event.preventDefault();
+                    if (!isNativeApp) {
+                        iniciarSesion();
+                    }
+                });
+
+                if (isNativeApp) {
+                    if (typeof PERSONAS_CAPACITOR === 'undefined' || !Array.isArray(PERSONAS_CAPACITOR)) {
+                        showError("Error de configuración", "No se pudo cargar la lista de personas.");
+                        persona.disabled = true;
+                        return;
+                    }
+
+                    const cargosValidos = new Set(Array.from(cargo.options, option => option.value).filter(Boolean));
+                    const configuracionValida = PERSONAS_CAPACITOR.every(personaConfigurada =>
+                        personaConfigurada && typeof personaConfigurada.nombre === 'string' &&
+                        personaConfigurada.nombre.trim() !== '' &&
+                        typeof personaConfigurada.cargo === 'string' &&
+                        cargosValidos.has(personaConfigurada.cargo)
+                    );
+                    if (!configuracionValida || PERSONAS_CAPACITOR.length === 0) {
+                        showError("Error de configuración", "Configure personas y cargos válidos en personas.js antes de usar la aplicación.");
+                        persona.disabled = true;
+                        return;
+                    }
+
+                    PERSONAS_CAPACITOR.forEach((personaConfigurada, index) => {
+                        persona.add(new Option(personaConfigurada.nombre.trim(), String(index)));
+                    });
+                    persona.addEventListener('change', () => {
+                        if (persona.value === '') {
+                            return;
+                        }
+                        const seleccion = PERSONAS_CAPACITOR[Number(persona.value)];
+                        if (!seleccion) {
+                            showError("Error de selección", "Seleccione una persona de la lista.");
+                            return;
+                        }
+                        nombre.value = seleccion.nombre.trim();
+                        cargo.value = seleccion.cargo;
+                        iniciarSesion();
+                        persona.value = '';
+                    });
+                }
+
+                function iniciarSesion() {
                     
                     //Capture the values
-                    const usernameValue = document.getElementById('nombre').value.trim();
-                    const cargoValue = document.getElementById('cargo').value.trim();
+                    const usernameValue = nombre.value.trim();
+                    const cargoValue = cargo.value.trim();
 
                     //Hide the previous alert
                     errorAlert.style.display = 'none';
@@ -104,7 +166,7 @@
                     
                     // Redirect them to the app dashboard
                     window.location.replace('dashboard.html');
-                });
+                }
                 function showError(title, message) {
                     errorTitle.innerText = title;
                     errorDesc.innerText = message;
@@ -124,7 +186,7 @@
             Bitacora Gres Caribe
             </h2>
             
-            <div class="subtitle">Ingrese su nombre y oficio para acceder</div>
+            <div class="subtitle" id="login-subtitle">Ingrese su nombre y oficio para acceder</div>
 
             <form id="loginForm" action="#" method="post" novalidate>
                 <div id="error-alert" style="display: none; background-color: #fef2f2; border: 1px solid #fee2e2; color: #991b1b; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 14px;">
@@ -132,16 +194,25 @@
                     <span id="error-desc"></span>
                 </div>
 
-                <div class="input-group">
+                <div class="input-group" id="persona-group" hidden>
+                    <label for="persona">Nombre:</label>
+                    <div class="select-wrapper">
+                        <select id="persona">
+                            <option value="">Seleccione su nombre</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-group" id="nombre-group">
                     <label for="nombre">Nombre:</label>
                     <input type="text" name="nombre" id="nombre" placeholder="Ej. Oscar Gutiérrez" required>
                 </div>                
-                <div class="input-group">
+                <div class="input-group" id="cargo-group">
                     <label for="cargo">Cargo:</label>
                     <div class="select-wrapper">
                         <select name="cargo" id="cargo" required>
                             <option value="">Seleccione un cargo</option>
                             <option value="Mecánico">Mecánico</option>
+                            <option value="Mecánico Automotriz">Mecánico Automotriz</option>
                             <option value="Mecánico Soldador">Mecánico Soldador</option>
                             <option value="Aprendiz Soldador">Aprendiz Soldador</option>
                             <option value="Eléctrico">Eléctrico</option>
@@ -155,9 +226,9 @@
                     </div>
                 </div>  
 
-                <button type="submit">Registrarse</button>
+                <button type="submit" id="login-submit">Registrarse</button>
 
-                <button type="history" onclick="window.location.href='historial.html'">Ver historial</button>
+                <button type="button" class="history-button" onclick="window.location.href='historial.html'">Ver historial</button>
 
             </form>
         </div>
