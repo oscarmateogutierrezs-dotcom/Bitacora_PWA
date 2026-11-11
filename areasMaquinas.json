@@ -211,6 +211,9 @@
             "nombreA":"Taller"
         },
         {
+            "nombreA":"Torno"
+        },
+        {
             "nombreA":"Otro"
         }
     ]
