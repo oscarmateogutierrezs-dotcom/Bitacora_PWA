@@ -326,7 +326,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
             areaSelect.addEventListener('change', () => {
                 const selectedArea = areas.find(area => area.nombreA === areaSelect.value);
-                const isAreaOnly = selectedArea?.nombreA === 'Taller' || selectedArea?.nombreA === 'Otro' || selectedArea?.nombreA === 'Despacho';
+                const isAreaOnly = selectedArea?.nombreA === 'Taller' || selectedArea?.nombreA === 'Otro' || selectedArea?.nombreA === 'Despacho' || selectedArea?.nombreA === 'Torno';
                 const lines = selectedArea?.lineas || [];
                 const hasLines = lines.length > 0;
                 lineaGroup.hidden = !hasLines;
