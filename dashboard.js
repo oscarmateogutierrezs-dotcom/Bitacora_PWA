@@ -581,7 +581,7 @@ window.addEventListener('DOMContentLoaded', () => {
         areaSelect.dispatchEvent(new Event('change'));
         activeSubmissionId = null;
         resetSubmitButton();
-        showStatus('Reporte guardado en este dispositivo. Se enviará hasta obtener confirmación.');
+        showStatus('Reporte guardado en este dispositivo. Envio en curso...');
         window.BitacoraQueue.run();
         updateHistorialDisplay(historialContainer, savedEntries);
     })
