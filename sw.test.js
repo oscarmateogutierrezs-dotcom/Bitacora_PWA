@@ -322,7 +322,7 @@ test('saving an entry returns the updated history', () => {
   const savedEntries = context.saveEntry(entry);
   assert.equal(savedEntries.length, 1);
   assert.equal(savedEntries[0].submissionId, entry.submissionId);
-  assert.equal(JSON.parse(storage.get('bitacora_entries')).length, 1);
+  assert.equal(JSON.parse(storage.get('bitacora_entry:entry-1')).submissionId, 'entry-1');
 });
 
 test('local file pages do not show a service worker error', () => {

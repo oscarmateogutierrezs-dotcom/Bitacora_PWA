@@ -1,4 +1,4 @@
-const CACHE_NAME = 'enterprise-v25';
+const CACHE_NAME = 'enterprise-v26';
 const META_CACHE_NAME = `${CACHE_NAME}-meta`;
 const ASSETS = [
   'login.html',
@@ -9,6 +9,7 @@ const ASSETS = [
   'historial.js',
   'offline.html',
   'session.js',
+  'submission-queue.js',
   'backguard.js',
   'areasMaquinas.json',
   'style.css',

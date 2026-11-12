@@ -9,12 +9,14 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <script src="session.js"></script>
+    <script src="submission-queue.js"></script>
     <script src="backguard.js"></script>
     <script src="dashboard.js"></script>
 </head>
 <body>
     <p id="compatibility-error" role="alert" aria-live="assertive" hidden>Este navegador no es compatible con esta aplicación.</p>
     <p id="service-worker-error" role="status" aria-live="polite" hidden>No se pudo activar el modo sin conexión.</p>
+    <p id="queue-status" role="status" aria-live="polite" hidden></p>
 
     <div class="container" style="max-width: 600px; margin: 20px auto;">
         <div class="dashboard-topbar">

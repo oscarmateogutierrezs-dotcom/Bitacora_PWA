@@ -390,7 +390,8 @@ button[type="submit"]:active {
 }
 
 #compatibility-error,
-#service-worker-error {
+#service-worker-error,
+#queue-status {
     width: 100%;
     max-width: 400px;
     margin: 0 auto 16px;
@@ -405,7 +406,8 @@ button[type="submit"]:active {
 }
 
 #compatibility-error:not([hidden]),
-#service-worker-error:not([hidden]) {
+#service-worker-error:not([hidden]),
+#queue-status:not([hidden]) {
     display: block;
 }
 

@@ -185,7 +185,6 @@ window.addEventListener('DOMContentLoaded', () => {
                 window.alert('No se pudo cerrar la sesión en este navegador.');
                 return;
             }
-            deleteAllEntries();
             window.location.replace('login.html');
         });
     }

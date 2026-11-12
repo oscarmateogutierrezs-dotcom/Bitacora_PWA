@@ -22,9 +22,6 @@ if (!token) {
 } else {
     try {
         sessionData = parseSessionToken(token);
-        if (isOffline()) {
-            window.location.href = 'login.html';
-        }
     } catch (e) {
         // Si el usuario inventó el token en la consola, el atob() fallará o no tendrá la firma
         clearSessionToken();
@@ -38,14 +35,6 @@ window.addEventListener('DOMContentLoaded', () => {
         disableUnsupportedControls(document);
         return;
     }
-
-    if (isOffline()) {
-        showError('Sin conexión', 'No hay conexión a internet. Cierre la aplicación, conéctese a la red e inténtelo nuevamente.');
-        disableUnsupportedControls(document);
-        return;
-    }
-
-    const GOOGLE_SHEETS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyQY8718j74saEvYXbQ0DEMcxGX6s8It__NYVh5viXQZ8Qx_EWKrTvXXlH1lSsnFH211g/exec';
 
     if (!sessionData) {
         return;
@@ -79,7 +68,6 @@ window.addEventListener('DOMContentLoaded', () => {
     const selectedImages = [];
     let imageCompressionQueue = Promise.resolve();
     let submitErrorTimeout = null;
-    const inFlightSubmissionIds = new Set();
 
     function createSubmissionId() {
         if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -221,16 +209,8 @@ window.addEventListener('DOMContentLoaded', () => {
             };
             selectedImage.compression = imageCompressionQueue
                 .then(() => loadImage(file))
-                .then(image => Promise.all([
-                    compressImage(image),
-                    compressImage(image, {
-                        maxDataLength: 30000,
-                        maxDimension: 320,
-                        minDimension: 80,
-                        qualities: [0.45, 0.3, 0.2]
-                    })
-                ]))
-                .then(([reportImage, historyImage]) => ({ reportImage, historyImage }), error => ({ error }));
+                .then(image => compressImage(image))
+                .then(reportImage => ({ reportImage }), error => ({ error }));
             imageCompressionQueue = selectedImage.compression.then(() => undefined, () => undefined);
             selectedImages.push(selectedImage);
         });
@@ -402,21 +382,12 @@ window.addEventListener('DOMContentLoaded', () => {
             appendField('Cargo', entry.cargo);
             if (entry.sendStatus) {
                 const statusLabels = {
-                    sending: 'Envío iniciado; resultado pendiente',
-                    unknown: 'Sin confirmación',
-                    confirmed: 'El reporte fue listado con exito',
-                    failed: 'Error de envío; copia local conservada'
+                    sending: 'Pendiente de envío y confirmación',
+                    unknown: 'Sin confirmación; se seguirá intentando',
+                    confirmed: 'El reporte fue listado con éxito',
+                    failed: 'Pendiente; se seguirá intentando'
                 };
                 appendField('Estado', statusLabels[entry.sendStatus] || 'Pendiente de verificación');
-
-                if (entry.sendStatus !== 'confirmed' && entry.sendStatus !== 'sending') {
-                    const retryButton = document.createElement('button');
-                    retryButton.type = 'button';
-                    retryButton.textContent = 'Reintentar envío';
-                    retryButton.disabled = inFlightSubmissionIds.has(entry.submissionId);
-                    retryButton.addEventListener('click', () => retrySubmission(entry, retryButton));
-                    report.append(retryButton, document.createElement('br'));
-                }
             }
             const reportImages = Array.isArray(entry.imagenes)
                 ? entry.imagenes
@@ -435,230 +406,9 @@ window.addEventListener('DOMContentLoaded', () => {
         container.replaceChildren(fragment);
     }
 
-    async function sendEntryToGoogleSheets(entry) {
-        const images = Array.isArray(entry.imagenes)
-            ? entry.imagenes
-            : (entry.imagen ? [entry.imagen] : []);
-        const payload = JSON.stringify({
-            ...entry,
-            imagenes: images,
-            imagen: images[0] || ''
-        });
-
-        const request = fetch(GOOGLE_SHEETS_WEB_APP_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: payload,
-            mode: 'no-cors'
-        }).then(response => ({
-            confirmed: response.type !== 'opaque' && response.ok,
-            transportComplete: response.type === 'opaque' || response.ok
-        }));
-        let timeoutId;
-        const timeout = new Promise((resolve, reject) => {
-            timeoutId = setTimeout(() => reject(new Error('Tiempo de espera agotado')), 30000);
-        });
-
-        return Promise.race([request, timeout]).finally(() => clearTimeout(timeoutId));
-    }
-
-    function requestSubmissionStatus(submissionId, timeoutMs = 10000) {
-        return new Promise((resolve, reject) => {
-            const callbackName = `__bitacoraStatus_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-            const script = document.createElement('script');
-            const endpoint = new URL(GOOGLE_SHEETS_WEB_APP_URL);
-            let timeoutId;
-
-            const cleanup = () => {
-                clearTimeout(timeoutId);
-                script.remove();
-                delete window[callbackName];
-            };
-
-            window[callbackName] = status => {
-                cleanup();
-                resolve(status);
-            };
-            script.onerror = () => {
-                cleanup();
-                reject(new Error('No se pudo consultar el estado del reporte.'));
-            };
-            endpoint.searchParams.set('action', 'status');
-            endpoint.searchParams.set('submissionId', submissionId);
-            endpoint.searchParams.set('callback', callbackName);
-            endpoint.searchParams.set('_', Date.now().toString());
-            script.src = endpoint.toString();
-            timeoutId = setTimeout(() => {
-                cleanup();
-                reject(new Error('La consulta de estado agotó el tiempo de espera.'));
-            }, timeoutMs);
-            document.head.append(script);
-        });
-    }
-
-    function updateEntrySendStatus(entry, sendStatus) {
-        const savedEntries = saveEntry({ ...entry, sendStatus });
-        if (!savedEntries) {
-            showError('No se pudo actualizar el estado del envío en el historial local.');
-            return;
-        }
-
-        updateHistorialDisplay(historialContainer, savedEntries);
-    }
-
-    const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-    // Devuelve 'confirmed', 'failed' (el servidor respondió que no lo tiene) o 'unknown' (sin respuesta).
-    async function verifySubmission(submissionId, attempts = 5) {
-        let lastResult = 'unknown';
-        for (let attempt = 0; attempt < attempts; attempt++) {
-            if (attempt > 0) {
-                await wait(2000 * attempt);
-            }
-
-            try {
-                const status = await requestSubmissionStatus(submissionId, 20000);
-                if (status.success && status.processed) {
-                    return 'confirmed';
-                }
-                lastResult = status.success ? 'failed' : 'unknown';
-            } catch {
-                lastResult = 'unknown';
-            }
-        }
-
-        return lastResult;
-    }
-
-    async function sendWithRetries(serverEntry, attempts = 4) {
-        for (let attempt = 0; attempt < attempts; attempt++) {
-            try {
-                const result = await sendEntryToGoogleSheets(serverEntry);
-                if (result.transportComplete) {
-                    return result;
-                }
-            } catch {
-                // El servidor pudo recibirlo aunque la respuesta no llegara; se verifica abajo.
-            }
-
-            if (attempt < attempts - 1) {
-                const alreadySaved = await verifySubmission(serverEntry.submissionId, 1);
-                if (alreadySaved === 'confirmed') {
-                    return { confirmed: true, transportComplete: true };
-                }
-                await wait(2000 * (attempt + 1));
-            }
-        }
-
-        return null;
-    }
-
-    async function sendEntryInBackground(serverEntry, localEntry) {
-        inFlightSubmissionIds.add(serverEntry.submissionId);
-        try {
-            const result = await sendWithRetries(serverEntry);
-            let sendStatus;
-            if (result?.confirmed) {
-                sendStatus = 'confirmed';
-            } else {
-                const verified = await verifySubmission(serverEntry.submissionId);
-                sendStatus = result || verified === 'confirmed' ? verified : 'failed';
-            }
-            updateEntrySendStatus(localEntry, sendStatus);
-        } catch {
-            updateEntrySendStatus(localEntry, 'failed');
-        } finally {
-            inFlightSubmissionIds.delete(serverEntry.submissionId);
-            updateHistorialDisplay(historialContainer, getEntries());
-        }
-    }
-
-    let isVerifyingPending = false;
-
-    async function verifyPendingEntries() {
-        if (isVerifyingPending || isOffline()) {
-            return;
-        }
-
-        isVerifyingPending = true;
-        try {
-            await checkPendingEntries();
-        } finally {
-            isVerifyingPending = false;
-        }
-    }
-
-    const autoResendCounts = new Map();
-
-    async function checkPendingEntries() {
-        const pending = getEntries().filter(entry =>
-            entry.submissionId &&
-            entry.sendStatus &&
-            entry.sendStatus !== 'confirmed' &&
-            !inFlightSubmissionIds.has(entry.submissionId)
-        );
-
-        for (const entry of pending) {
-            let verified;
-            inFlightSubmissionIds.add(entry.submissionId);
-            try {
-                verified = await verifySubmission(entry.submissionId, 2);
-                if (verified === 'confirmed') {
-                    updateEntrySendStatus(entry, 'confirmed');
-                } else if (entry.sendStatus === 'sending') {
-                    updateEntrySendStatus(entry, 'unknown');
-                }
-            } finally {
-                inFlightSubmissionIds.delete(entry.submissionId);
-            }
-
-            // El servidor confirmó que no lo recibió: se reenvía solo si no hay imágenes de menor calidad que perder.
-            const hasImages = (entry.imagenes && entry.imagenes.length) || entry.imagen;
-            const resendCount = autoResendCounts.get(entry.submissionId) || 0;
-            if (verified === 'failed' && !hasImages && resendCount < 3) {
-                autoResendCounts.set(entry.submissionId, resendCount + 1);
-                const { sendStatus, ...serverEntry } = entry;
-                sendEntryInBackground(serverEntry, { ...entry, sendStatus: 'sending' });
-            }
-        }
-
-        updateHistorialDisplay(historialContainer, getEntries());
-    }
-
-    function retrySubmission(entry, button) {
-        if (isOffline()) {
-            showError('Sin conexión, no se puede enviar el reporte.');
-            return;
-        }
-
-        if (button.disabled) {
-            return;
-        }
-
-        button.disabled = true;
-        const pendingEntry = { ...entry, sendStatus: 'sending' };
-        const savedEntries = saveEntry(pendingEntry);
-        if (!savedEntries) {
-            button.disabled = false;
-            showError('No se pudo actualizar el historial local para reintentar.');
-            return;
-        }
-
-        const { sendStatus, ...serverEntry } = entry;
-        sendEntryInBackground(serverEntry, pendingEntry);
-        updateHistorialDisplay(historialContainer, savedEntries);
-    }
-
     updateHistorialDisplay(historialContainer, getEntries());
-    verifyPendingEntries();
-    // Apps Script puede tardar en registrar reportes con imagen; se vuelve a consultar sin reenviar.
-    const pendingCheckInterval = setInterval(verifyPendingEntries, 10000);
-    setTimeout(() => clearInterval(pendingCheckInterval), 15 * 60 * 1000);
-    window.addEventListener('online', verifyPendingEntries);
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-            verifyPendingEntries();
-        }
+    window.addEventListener('bitacora-queue-change', () => {
+        updateHistorialDisplay(historialContainer, getEntries());
     });
 
     // Log Out button logic
@@ -669,8 +419,6 @@ window.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        deleteAllEntries(); // Clear local entries on logout
-
         window.location.href ="login.html";
 
     });
@@ -678,11 +426,6 @@ window.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', async (event) => {
         event.preventDefault()
         if (isSubmitting) {
-            return;
-        }
-
-        if (isOffline()) {
-            showError('Sin conexión, No se puede enviar la novedad porque no hay conexión a internet.');
             return;
         }
 
@@ -804,7 +547,6 @@ window.addEventListener('DOMContentLoaded', () => {
             return;
         }
         const reportImages = imageCompressionResults.map(result => result.reportImage);
-        const historyImages = imageCompressionResults.map(result => result.historyImage);
 
         activeSubmissionId = activeSubmissionId || createSubmissionId();
         const newEntry = {
@@ -822,7 +564,7 @@ window.addEventListener('DOMContentLoaded', () => {
             cargo
         };
 
-        const localEntry = { ...newEntry, imagenes: historyImages, sendStatus: 'sending' };
+        const localEntry = { ...newEntry, sendStatus: 'sending' };
         const savedEntries = saveEntry(localEntry);
         if (!savedEntries) {
             showError('No se pudo guardar una copia local del reporte; no se inició el envío. Libera espacio e inténtalo de nuevo.');
@@ -836,8 +578,8 @@ window.addEventListener('DOMContentLoaded', () => {
         areaSelect.dispatchEvent(new Event('change'));
         activeSubmissionId = null;
         resetSubmitButton();
-        showStatus('Reporte enviado, esperando confirmación');
-        sendEntryInBackground(newEntry, localEntry);
+        showStatus('Reporte guardado en este dispositivo. Se enviará hasta obtener confirmación.');
+        window.BitacoraQueue.run();
         updateHistorialDisplay(historialContainer, savedEntries);
     })
 });

@@ -18,6 +18,7 @@ showCompatibilityMessage();
 
 const SESSION_MARKER = 'session_active_2026';
 const ENTRIES_STORAGE_KEY = 'bitacora_entries';
+const ENTRY_STORAGE_PREFIX = 'bitacora_entry:';
 const THEME_STORAGE_KEY = 'bitacora_theme';
 
 function setTheme(theme) {
@@ -79,15 +80,6 @@ if (typeof document !== 'undefined') {
 
 function isOffline() {
 	return typeof navigator !== 'undefined' && navigator.onLine === false;
-}
-
-function deleteAllEntries() {
-	try {
-		localStorage.removeItem(ENTRIES_STORAGE_KEY);
-	} catch {
-		return false;
-	}
-	return true;
 }
 
 function encodeToken(value) {
@@ -156,31 +148,53 @@ function clearSessionToken() {
 	return true;
 }
 
+function readEntriesStrict() {
+	const entries = JSON.parse(localStorage.getItem(ENTRIES_STORAGE_KEY) || '[]');
+	if (!Array.isArray(entries)) {
+		throw new Error('El historial local no es válido.');
+	}
+
+	for (let index = 0; index < localStorage.length; index++) {
+		const key = localStorage.key(index);
+		if (!key || !key.startsWith(ENTRY_STORAGE_PREFIX)) {
+			continue;
+		}
+		const entry = JSON.parse(localStorage.getItem(key));
+		if (!entry || typeof entry !== 'object' || entry.submissionId !== key.slice(ENTRY_STORAGE_PREFIX.length)) {
+			throw new Error(`El reporte local ${key} no es válido.`);
+		}
+		const existingIndex = entries.findIndex(savedEntry => savedEntry.submissionId === entry.submissionId);
+		if (existingIndex >= 0) {
+			entries[existingIndex] = entry;
+		} else {
+			entries.push(entry);
+		}
+	}
+	return entries;
+}
+
 function getEntries() {
 	try {
-		const entries = JSON.parse(localStorage.getItem(ENTRIES_STORAGE_KEY) || '[]');
-		return Array.isArray(entries) ? entries : [];
-	} catch {
+		return readEntriesStrict();
+	} catch (error) {
+		console.error('No se pudo leer el historial local:', error);
 		return [];
 	}
 }
 
 function saveEntry(entry) {
 	try {
-		const entries = getEntries();
-		const existingIndex = entry.submissionId
-			? entries.findIndex(savedEntry => savedEntry.submissionId === entry.submissionId)
-			: -1;
-
-		if (existingIndex >= 0) {
-			entries[existingIndex] = entry;
-		} else {
-			entries.push(entry);
+		const entries = readEntriesStrict();
+		if (!entry.submissionId || !/^[A-Za-z0-9_-]{1,128}$/.test(entry.submissionId)) {
+			throw new Error('El reporte necesita un identificador válido.');
 		}
-
-		localStorage.setItem(ENTRIES_STORAGE_KEY, JSON.stringify(entries));
+		localStorage.setItem(ENTRY_STORAGE_PREFIX + entry.submissionId, JSON.stringify(entry));
+		const existingIndex = entries.findIndex(savedEntry => savedEntry.submissionId === entry.submissionId);
+		if (existingIndex >= 0) entries[existingIndex] = entry;
+		else entries.push(entry);
 		return entries;
-	} catch {
+	} catch (error) {
+		console.error('No se pudo guardar el reporte local:', error);
 		return false;
 	}
 }
