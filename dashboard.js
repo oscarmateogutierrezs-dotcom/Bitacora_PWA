@@ -109,6 +109,9 @@ window.addEventListener('DOMContentLoaded', () => {
     function showStatus(message) {
         statusMessage.innerText = message;
         statusMessage.hidden = false;
+        setTimeout(() => {
+            statusMessage.hidden = true;
+        }, 3000);
     }
 
     function fillSelect(select, options, placeholder) {

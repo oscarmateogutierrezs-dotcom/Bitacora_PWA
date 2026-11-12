@@ -3,7 +3,6 @@
     const retryDelay = 15000;
     let running = false;
     let timer;
-    let lastError = '';
 
     function pendingEntries() {
         return readEntriesStrict().filter(entry =>
@@ -12,25 +11,7 @@
     }
 
     function publish() {
-        const statusElement = document.getElementById('queue-status');
-        try {
-            const count = pendingEntries().length;
-            if (statusElement) {
-                statusElement.hidden = count === 0 && !lastError;
-                statusElement.textContent = lastError || (count
-                    ? `${count} reporte(s) pendiente(s). ${isOffline()
-                        ? 'Sin conexión; el envío continuará cuando regrese.'
-                        : 'Se intentará enviar y confirmar automáticamente.'}`
-                    : '');
-            }
-            window.dispatchEvent(new Event('bitacora-queue-change'));
-        } catch (error) {
-            console.error('No se pudo leer la cola de envíos:', error);
-            if (statusElement) {
-                statusElement.hidden = false;
-                statusElement.textContent = 'No se pudo leer la cola de reportes de este dispositivo.';
-            }
-        }
+        window.dispatchEvent(new Event('bitacora-queue-change'));
     }
 
     function requestStatus(submissionId) {
@@ -133,7 +114,6 @@
         if (running) return;
         running = true;
         try {
-            lastError = '';
             publish();
             if (!isOffline()) {
                 for (const entry of pendingEntries()) {
@@ -141,14 +121,12 @@
                     try {
                         await processEntry(entry);
                     } catch (error) {
-                        lastError = 'No se pudo confirmar un reporte. Se seguirá intentando automáticamente.';
                         console.error('Error al procesar el reporte pendiente:', error);
                     }
                     publish();
                 }
             }
         } catch (error) {
-            lastError = 'No se pudo procesar la cola local. Compruebe el almacenamiento del navegador.';
             console.error('Error de la cola de envíos:', error);
         } finally {
             running = false;

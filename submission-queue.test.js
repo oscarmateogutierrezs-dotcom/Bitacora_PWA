@@ -142,7 +142,6 @@ test('the pages start the shared queue independently of the session', () => {
     for (const name of ['login.html', 'dashboard.html', 'historial.html']) {
         const html = fs.readFileSync(name, 'utf8');
         assert.match(html, /src="submission-queue\.js"/);
-        assert.match(html, /id="queue-status"/);
     }
     for (const name of ['dashboard.js', 'historial.js']) {
         assert.doesNotMatch(fs.readFileSync(name, 'utf8'), /deleteAllEntries\(\)/);
