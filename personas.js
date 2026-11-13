@@ -4,11 +4,11 @@ const PERSONAS_CAPACITOR = [
     { nombre: 'Daniel Arias', cargo: 'Mecánico' },
     { nombre: 'Donaldo Macea', cargo: 'Mecánico Automotriz' },
     { nombre: 'Germán Barbosa', cargo: 'Eléctrico' },
-    { nombre: 'Jordi Ibañez', cargo: 'Mecánico' },
+    { nombre: 'Jordi Ibáñez', cargo: 'Mecánico' },
     { nombre: 'Julio Marenco', cargo: 'Eléctrico' },
     { nombre: 'Kevin Cuentas', cargo: 'Aprendiz Soldador' },
     { nombre: 'Nayme Reyes', cargo: 'Mecánico Soldador' },
-    { nombre: 'Oscar Gutiérrez', cargo: 'Mecánico' },
+    { nombre: 'Oscar Gutierrez', cargo: 'Mecánico' },
     { nombre: 'Oscar Perez', cargo: 'Mecánico' },
     { nombre: 'Ivan Ripoll', cargo: 'Mecánico' }
 ];

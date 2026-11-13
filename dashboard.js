@@ -309,7 +309,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
             areaSelect.addEventListener('change', () => {
                 const selectedArea = areas.find(area => area.nombreA === areaSelect.value);
-                const isAreaOnly = selectedArea?.nombreA === 'Taller' || selectedArea?.nombreA === 'Otro' || selectedArea?.nombreA === 'Despacho' || selectedArea?.nombreA === 'Torno';
+                const isAreaOnly = selectedArea?.nombreA === 'Taller' || selectedArea?.nombreA === 'Otro' || selectedArea?.nombreA === 'Despacho';
+                const isTorno = selectedArea?.nombreA === 'Torno';
                 const lines = selectedArea?.lineas || [];
                 const hasLines = lines.length > 0;
                 lineaGroup.hidden = !hasLines;
@@ -318,14 +319,16 @@ window.addEventListener('DOMContentLoaded', () => {
                 const machines = hasLines ? [] : (selectedArea?.maquinas || []);
                 fillSelect(maquinaSelect, machines.map(machine => machine.nombreM), 'Seleccione una máquina');
                 renderMachineOptions(machines);
-                maquinaGroup.hidden = isAreaOnly;
-                maquinaSelect.required = !isAreaOnly;
-                maquinaSelect.disabled = isAreaOnly || hasLines || machines.length === 0;
+                maquinaGroup.hidden = isAreaOnly || isTorno;
+                maquinaSelect.required = !isAreaOnly && !isTorno;
+                maquinaSelect.disabled = isAreaOnly || isTorno || hasLines || machines.length === 0;
                 duracionGroup.hidden = isAreaOnly;
                 if (isAreaOnly) {
                     maquinaSelect.value = '';
                     duracionHorasInput.value = '';
                     duracionMinutosInput.value = '';
+                }else if (isTorno) {
+                    maquinaSelect.value = '';
                 }
             });
 
