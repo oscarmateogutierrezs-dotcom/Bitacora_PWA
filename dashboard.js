@@ -365,7 +365,9 @@ window.addEventListener('DOMContentLoaded', () => {
         }
 
         const fragment = document.createDocumentFragment();
-        entries.slice().reverse().forEach(entry => {
+        entries.slice().reverse().filter((entry, index) =>
+            index < 6 || entry.sendStatus !== 'confirmed'
+        ).forEach(entry => {
             const report = document.createElement('div');
             report.style.borderBottom = '1px solid #e2e8f0';
             report.style.padding = '8px 0';
