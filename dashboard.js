@@ -100,6 +100,14 @@ window.addEventListener('DOMContentLoaded', () => {
         }, 1000);
     }
 
+    function showValidationError(message, inputs) {
+        showError(message);
+        inputs.forEach(input => input.classList.add('input-error'));
+        setTimeout(() => {
+            inputs.forEach(input => input.classList.remove('input-error'));
+        }, 1000);
+    }
+
     // Helper: Hide error notification
     function hideError() {
         errorAlert.style.display = 'none';
@@ -500,79 +508,37 @@ window.addEventListener('DOMContentLoaded', () => {
         const hora = new Date().toLocaleTimeString(); //extract the current time
 
         if (![duracionHoras, duracionMinutos].every(value => value === '' || /^\d+$/.test(value))) {
-            showError("La duración solo puede contener números");
-            const inputs = [
-                document.getElementById('duracionHoras'),
-                document.getElementById('duracionMinutos')
-            ];
-            inputs.forEach(input => input.classList.add('input-error'));
-            setTimeout(() => {
-                inputs.forEach(input => input.classList.remove('input-error'));
-            }, 1000);
+            showValidationError("La duración solo puede contener números", [duracionHorasInput, duracionMinutosInput]);
             return;
         }
                 
         if (area === ""){
-            showError("Especifique el nombre del área afectada")
-            const input = document.getElementById('area')
-            input.classList.add('input-error');
-            setTimeout(() => {
-                input.classList.remove('input-error');
-            }, 1000);
+            showValidationError("Especifique el nombre del área afectada", [areaSelect]);
             return;
         }
 
         if (lineaSelect.required && linea === ""){
-            showError("Seleccione la línea de Extrusion");
-            lineaSelect.classList.add('input-error');
-            setTimeout(() => {
-                lineaSelect.classList.remove('input-error');
-            }, 1000);
+            showValidationError("Seleccione la línea de Extrusion", [lineaSelect]);
             return;
         }
 
         if (!maquinaGroup.hidden && selectedMachines.length === 0){
-            showError("Especifique la máquina afectada");
-            maquinaSelect.classList.add('input-error');
-            setTimeout(() => {
-                maquinaSelect.classList.remove('input-error');
-            }, 1000);
+            showValidationError("Especifique la máquina afectada", [maquinaSelect]);
             return;
         }
 
         if (novedad === ""){
-            showError("Especifique la novedad realizada")
-            const input = document.getElementById('novedad')
-            input.classList.add('input-error');
-            setTimeout(() => {
-                input.classList.remove('input-error');
-            }, 1000);
+            showValidationError("Especifique la novedad realizada", [document.getElementById('novedad')]);
             return;
         }
 
         if (!duracionGroup.hidden && duracionHoras === "" && duracionMinutos === ""){
-            showError("Ingrese las horas, los minutos o ambos para la duración")
-            const inputs = [
-                document.getElementById('duracionHoras'),
-                document.getElementById('duracionMinutos')
-            ];
-            inputs.forEach(input => input.classList.add('input-error'));
-            setTimeout(() => {
-                inputs.forEach(input => input.classList.remove('input-error'));
-            }, 1000);
+            showValidationError("Ingrese las horas, los minutos o ambos para la duración", [duracionHorasInput, duracionMinutosInput]);
             return;
         }
 
         if (!duracionGroup.hidden && (parseInt(duracionHoras || '0') === 0 && parseInt(duracionMinutos || '0') === 0)) {
-            showError("La duración no puede ser cero horas y cero minutos");
-            const inputs = [
-                document.getElementById('duracionHoras'),
-                document.getElementById('duracionMinutos')
-            ];
-            inputs.forEach(input => input.classList.add('input-error'));
-            setTimeout(() => {
-                inputs.forEach(input => input.classList.remove('input-error'));
-            }, 1000);
+            showValidationError("La duración no puede ser cero horas y cero minutos", [duracionHorasInput, duracionMinutosInput]);
             return;
         }
 

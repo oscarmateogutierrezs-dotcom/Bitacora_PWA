@@ -94,7 +94,7 @@ for (const token of [null, 'valid-session']) {
     assert.equal(result.requests.length, 1);
     assert.equal(result.requests[0].searchParams.get('action'), 'entries');
     assert.deepEqual(result.redirects, []);
-    assert.equal(result.status.textContent, '1 entrada cargada.');
+    assert.equal(result.status.textContent, '1 entrada cargada (del mes).');
     assert.equal(result.list.children.length, 1);
     const card = result.list.children[0];
     assert.deepEqual(card.children.map(node => node.className || ''), [
@@ -156,7 +156,7 @@ test('history excludes a header returned by an older Apps Script deployment', as
   ] });
   await new Promise(resolve => setImmediate(resolve));
 
-  assert.equal(result.status.textContent, '1 entrada cargada.');
+  assert.equal(result.status.textContent, '1 entrada cargada (del mes).');
   assert.equal(result.list.children.length, 1);
   assert.equal(result.list.children[0].children[0].textContent, 'Área de taller');
 });
@@ -200,7 +200,7 @@ test('Apps Script excludes the actual sheet header before returning entries', as
 
   assert.equal(result.backend.readEntries().length, 1);
   assert.equal(result.backend.readEntries()[0].area, 'Taller');
-  assert.equal(result.status.textContent, '1 entrada cargada.');
+  assert.equal(result.status.textContent, '1 entrada cargada (del mes).');
   assert.equal(result.list.children[0].children[0].textContent, 'Taller');
 });
 
