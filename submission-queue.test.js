@@ -119,6 +119,20 @@ test('opaque response or unavailable status never counts as confirmation', async
     assert.ok(page.messages.length > 0);
 });
 
+test('keeps the local creation time after confirmation without sending it', async () => {
+    let processed = false;
+    const page = createPage({
+        status: () => ({ success: true, processed }),
+        post: async () => { processed = true; return { type: 'opaque' }; }
+    });
+    page.context.saveEntry({ ...entry, localCreatedAt: 123456 });
+    await page.context.window.BitacoraQueue.run();
+    assert.equal(page.requests.length, 1);
+    assert.equal('localCreatedAt' in page.requests[0], false);
+    assert.equal(page.context.getEntries()[0].localCreatedAt, 123456);
+    assert.equal(page.context.getEntries()[0].sendStatus, 'confirmed');
+});
+
 test('legacy entries are retained and cannot overwrite a newer per-ID entry', () => {
     const storage = createStorage();
     storage.setItem('bitacora_entries', JSON.stringify([entry]));

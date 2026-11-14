@@ -358,6 +358,43 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('cargo-display').innerText = `Oficio registrado: ${cargo}`;
     loadAreasAndMachines();
 
+    function historyTimestamp(entry) {
+        if (Number.isFinite(entry.localCreatedAt)) {
+            return entry.localCreatedAt;
+        }
+
+        const dateParts = String(entry.fecha || '').match(/\d+/g);
+        const timeParts = String(entry.hora || '').match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(.*)$/);
+        if (!dateParts || dateParts.length !== 3 || !timeParts) return 0;
+
+        const dateOrder = new Intl.DateTimeFormat().formatToParts(new Date(2006, 10, 22))
+            .filter(part => ['year', 'month', 'day'].includes(part.type))
+            .map(part => part.type);
+        const date = {};
+        dateOrder.forEach((part, index) => { date[part] = Number(dateParts[index]); });
+        if (date.year < 100 || date.month < 1 || date.month > 12 || date.day < 1 || date.day > 31) return 0;
+
+        let hour = Number(timeParts[1]);
+        const minute = Number(timeParts[2]);
+        const second = Number(timeParts[3] || 0);
+        const normalize = value => value.toLocaleLowerCase().replace(/[\s.]/g, '');
+        const period = normalize(timeParts[4]);
+        if (period) {
+            const formatter = new Intl.DateTimeFormat(undefined, { hour: 'numeric', hour12: true });
+            const dayPeriod = h => formatter.formatToParts(new Date(2006, 0, 1, h))
+                .find(part => part.type === 'dayPeriod')?.value || '';
+            const am = normalize(dayPeriod(1));
+            const pm = normalize(dayPeriod(13));
+            if (!am || !pm || am === pm || (period !== am && period !== pm) || hour < 1 || hour > 12) return 0;
+            hour = hour % 12 + (period === pm ? 12 : 0);
+        }
+        if (hour > 23 || minute > 59 || second > 59) return 0;
+
+        const result = new Date(date.year, date.month - 1, date.day, hour, minute, second);
+        if (result.getFullYear() !== date.year || result.getMonth() !== date.month - 1 || result.getDate() !== date.day) return 0;
+        return result.getTime();
+    }
+
     function updateHistorialDisplay(container, entries) {
         if (!entries || entries.length === 0) {
             container.textContent = 'No hay novedades registradas en este dispositivo todavía.';
@@ -365,9 +402,11 @@ window.addEventListener('DOMContentLoaded', () => {
         }
 
         const fragment = document.createDocumentFragment();
-        entries.slice().reverse().filter((entry, index) =>
+        entries.slice().reverse().map(entry => ({ entry, timestamp: historyTimestamp(entry) }))
+            .sort((a, b) => b.timestamp - a.timestamp)
+            .filter(({ entry }, index) =>
             index < 6 || entry.sendStatus !== 'confirmed'
-        ).forEach(entry => {
+        ).forEach(({ entry }) => {
             const report = document.createElement('div');
             report.style.borderBottom = '1px solid #e2e8f0';
             report.style.padding = '8px 0';
@@ -572,7 +611,7 @@ window.addEventListener('DOMContentLoaded', () => {
             cargo
         };
 
-        const localEntry = { ...newEntry, sendStatus: 'sending' };
+        const localEntry = { ...newEntry, localCreatedAt: Date.now(), sendStatus: 'sending' };
         const savedEntries = saveEntry(localEntry);
         if (!savedEntries) {
             showError('No se pudo guardar una copia local del reporte; no se inició el envío. Libera espacio e inténtalo de nuevo.');

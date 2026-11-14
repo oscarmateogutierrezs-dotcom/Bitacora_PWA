@@ -9,10 +9,15 @@ function createDashboard(entries) {
     const createNode = () => ({
         children: [],
         style: {},
+        listeners: {},
+        value: '',
+        selectedOptions: [],
         classList: { add() {}, remove() {} },
         append(...children) { this.children.push(...children); },
         replaceChildren(fragment) { this.children = fragment ? fragment.children : []; },
-        addEventListener() {},
+        addEventListener(type, handler) { this.listeners[type] = handler; },
+        dispatchEvent(event) { if (this.listeners[event.type]) this.listeners[event.type](event); },
+        reset() {},
         querySelector() { return createNode(); }
     });
     const context = {
@@ -21,9 +26,18 @@ function createDashboard(entries) {
         getSessionToken: () => 'valid',
         parseSessionToken: () => ({ nombre: 'Prueba', cargo: 'Mecánico' }),
         getEntries: () => entries,
+        saveEntry: entry => {
+            const result = [...entries, entry];
+            entries.unshift(entry);
+            return result;
+        },
         fetch: () => new Promise(() => {}),
+        crypto: { randomUUID: () => 'new-report' },
+        Event: class { constructor(type) { this.type = type; } },
+        setTimeout() {},
         window: {
             location: {},
+            BitacoraQueue: { run() {} },
             addEventListener(type, handler) { handlers[type] = handler; }
         },
         document: {
@@ -39,7 +53,7 @@ function createDashboard(entries) {
     vm.createContext(context);
     vm.runInContext(fs.readFileSync('dashboard.js', 'utf8'), context);
     handlers.DOMContentLoaded();
-    return { handlers, container: elements.get('historialContainer') };
+    return { handlers, elements, document: context.document, container: elements.get('historialContainer') };
 }
 
 function displayedAreas(container) {
@@ -77,6 +91,74 @@ test('keeps older unconfirmed reports visible and updates after confirmation', (
         'Reporte 5', 'Reporte 4', 'Reporte 3'
     ]);
     assert.equal(entries.length, 11);
+});
+
+test('keeps the newest report visible after confirmation when storage keys are unordered', () => {
+    const entries = [
+        { ...entry('nuevo', 'sending'), localCreatedAt: 2000 },
+        ...Array.from({ length: 6 }, (_, i) => ({
+            ...entry(i + 1, 'confirmed'), localCreatedAt: 1000 + i
+        }))
+    ];
+    const { container, handlers } = createDashboard(entries);
+    assert.deepEqual(displayedAreas(container), [
+        'Reporte nuevo', 'Reporte 6', 'Reporte 5', 'Reporte 4', 'Reporte 3', 'Reporte 2'
+    ]);
+    entries[0].sendStatus = 'confirmed';
+    handlers['bitacora-queue-change']();
+    assert.deepEqual(displayedAreas(container), [
+        'Reporte nuevo', 'Reporte 6', 'Reporte 5', 'Reporte 4', 'Reporte 3', 'Reporte 2'
+    ]);
+    assert.equal(entries.length, 7);
+    assert.deepEqual(displayedAreas(createDashboard(entries).container), displayedAreas(container));
+});
+
+test('places new timestamped reports ahead of older reports without timestamps', () => {
+    const entries = [
+        { ...entry('nuevo', 'confirmed'), localCreatedAt: 2000 },
+        ...Array.from({ length: 6 }, (_, i) => entry(i + 1, 'confirmed'))
+    ];
+    const { container } = createDashboard(entries);
+    assert.deepEqual(displayedAreas(container), [
+        'Reporte nuevo', 'Reporte 6', 'Reporte 5', 'Reporte 4', 'Reporte 3', 'Reporte 2'
+    ]);
+});
+
+test('orders previously saved reports by their local date and time', () => {
+    const older = new Date(2026, 0, 10, 11, 0, 0);
+    const newer = new Date(2026, 0, 11, 13, 30, 0);
+    const datedEntry = (id, date) => ({
+        ...entry(id, 'confirmed'), fecha: date.toLocaleDateString(), hora: date.toLocaleTimeString()
+    });
+    const entries = [
+        datedEntry('nuevo', newer),
+        ...Array.from({ length: 6 }, (_, i) => datedEntry(i + 1, older))
+    ];
+    const { container } = createDashboard(entries);
+    assert.equal(displayedAreas(container).length, 6);
+    assert.equal(displayedAreas(container)[0], 'Reporte nuevo');
+    assert.equal(entries.length, 7);
+});
+
+test('a submitted report remains visible after a queue refresh and confirmation', async () => {
+    const entries = Array.from({ length: 6 }, (_, i) => entry(i + 1, 'confirmed'));
+    const { elements, document, handlers, container } = createDashboard(entries);
+    elements.get('area').value = 'Nuevo';
+    document.getElementById('novedad').value = 'Reparación';
+    elements.get('maquinaGroup').hidden = true;
+    elements.get('duracionGroup').hidden = true;
+
+    await elements.get('bitacoraForm').listeners.submit({ preventDefault() {} });
+    assert.equal(entries.length, 7);
+    assert.equal(entries[0].sendStatus, 'sending');
+    assert.equal(typeof entries[0].localCreatedAt, 'number');
+    assert.equal(displayedAreas(container)[0], 'Nuevo');
+
+    entries[0].sendStatus = 'confirmed';
+    handlers['bitacora-queue-change']();
+    assert.deepEqual(displayedAreas(container), [
+        'Nuevo', 'Reporte 6', 'Reporte 5', 'Reporte 4', 'Reporte 3', 'Reporte 2'
+    ]);
 });
 
 test('shows all reports when fewer than six exist and an empty message otherwise', () => {

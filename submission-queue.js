@@ -57,7 +57,7 @@
     }
 
     async function postEntry(entry) {
-        const { sendStatus, ...payload } = entry;
+        const { sendStatus, localCreatedAt, ...payload } = entry;
         const images = Array.isArray(payload.imagenes)
             ? payload.imagenes
             : (payload.imagen ? [payload.imagen] : []);
