@@ -8,6 +8,7 @@ const PERSONAS_CAPACITOR = [
     { nombre: 'Julio Marenco', cargo: 'Eléctrico' },
     { nombre: 'Kevin Cuentas', cargo: 'Aprendiz Soldador' },
     { nombre: 'Nayme Reyes', cargo: 'Mecánico Soldador' },
+    { nombre: 'Nilson Borja', cargo: 'Eléctrico' },
     { nombre: 'Oscar Gutierrez', cargo: 'Mecánico' },
     { nombre: 'Oscar Perez', cargo: 'Mecánico' },
     { nombre: 'Ivan Ripoll', cargo: 'Mecánico' }
