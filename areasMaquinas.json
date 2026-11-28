@@ -23,6 +23,7 @@
                 {"nombreM":"Pala"},
                 {"nombreM":"Rodillos Acumuladores"},
                 {"nombreM":"Rodillos Elevadores"},
+                {"nombreM":"Tablero Electrico"},
                 {"nombreM":"Tapete Pulmon"},
                 {"nombreM":"Otro (especifique maquina)"}
             ]
@@ -44,6 +45,7 @@
                 {"nombreM":"Banda Encañe"},
                 {"nombreM":"Banda Encañe Manual"},
                 {"nombreM":"Cadena Guillotina"},
+                {"nombreM":"Caja Electrica"},
                 {"nombreM":"Ducto Guaya de encañe"},
                 {"nombreM":"Gato (empujar vagona de encañe)"},
                 {"nombreM":"Guaya Encañe"},
